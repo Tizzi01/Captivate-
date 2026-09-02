@@ -238,6 +238,48 @@ function typingDelay(text: string): number {
  * state to get out of sync. */
 const FADE_PX = 20;
 
+/* Ease the page down so the whole chat is in view once it opens.
+ *
+ * Hand-rolled rather than scrollIntoView({ behavior: "smooth" }), because the
+ * native curve is symmetrical: it creeps away at the start. This one leaves
+ * immediately and coasts into place (ease-out cubic).
+ *
+ * The target is recomputed every frame on purpose. The panel is easing open at
+ * the same time, so the document is still growing underneath this, and a
+ * position measured once at the start would land short. */
+function easePageTo(bottomOf: () => number, duration = 700) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const start = window.scrollY;
+  const t0 = performance.now();
+  let cancelled = false;
+
+  /* Any deliberate scroll of their own wins immediately. */
+  const stop = () => {
+    cancelled = true;
+    for (const e of ["wheel", "touchstart", "keydown"]) {
+      window.removeEventListener(e, stop);
+    }
+  };
+  for (const e of ["wheel", "touchstart", "keydown"]) {
+    window.addEventListener(e, stop, { passive: true, once: true });
+  }
+
+  function step(now: number) {
+    if (cancelled) return;
+    const t = Math.min(1, (now - t0) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const want = Math.min(bottomOf() - window.innerHeight, max);
+    if (want > start) window.scrollTo(0, start + (want - start) * eased);
+
+    if (t < 1) requestAnimationFrame(step);
+    else stop();
+  }
+  requestAnimationFrame(step);
+}
+
 /** The panel's height once opened, in px. It has exactly two sizes: the
  *  height of the greeting alone, and this. */
 const PANEL_PX = 384;
@@ -743,6 +785,18 @@ export function Chat() {
     el.style.height = `${el.getBoundingClientRect().height}px`;
     void el.offsetHeight;
     el.style.height = `${PANEL_PX}px`;
+
+    /* Bring the whole thing into view as it opens. The panel's bottom is where
+     * the controls sit, so the margin below it is what keeps the composer off
+     * the bottom edge of the screen. */
+    const BREATHING_ROOM = 28;
+    easePageTo(
+      () =>
+        window.scrollY +
+        el.getBoundingClientRect().top +
+        PANEL_PX +
+        BREATHING_ROOM,
+    );
   }, [messages.length]);
 
   /* Keep the newest message in view, once there is anything to keep in view. */
