@@ -33,7 +33,7 @@ export const STATS_REVALIDATE_SECONDS = 300;
 
 /** One picture in a gallery. Leave `images` empty and the gallery says so
  *  rather than rendering broken frames. Drop files in /public and point `src`
- *  at them, e.g. "/japan/letter.jpg". */
+ *  at them, e.g. "/japan/invite.png". */
 export type GalleryImage = {
   src: string;
   alt: string;
@@ -203,7 +203,7 @@ export const otherStuff: Paragraph[] = [
       images: [
         {
           src: "/japan/invite.png",
-          alt: "The invitation email to the Shiba Arcade exhibition",
+          alt: "The invitation email to the Shiba Arcade exhibition at Spacebar Studio",
           caption: "The invite.",
         },
         {
@@ -212,17 +212,22 @@ export const otherStuff: Paragraph[] = [
           caption: "From the people who made it.",
         },
         {
-          src: "/japan/room.jpg",
+          src: "/japan/room.png",
           alt: "Someone asleep in a bunk at the venue",
           caption: "From the people who made it.",
         },
         {
+          src: "/japan/ticket.png",
+          alt: "The order for the first 30 tickets to Shiba Arcade",
+          caption: "Bought the ticket.",
+        },
+        {
           src: "/japan/couldnt-go.png",
-          alt: "A list of people who bought tickets but could not go",
+          alt: "A list of people who bought a ticket and then could not go",
           caption: "🥀",
         },
         {
-          src: "/japan/la-peace.gif",
+          src: "/japan/la-peace.png",
           alt: "The la peace meme",
           caption: "Sucked a lot in the moment, but I've found la peace.",
         },
