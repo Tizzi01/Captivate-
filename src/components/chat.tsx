@@ -240,6 +240,9 @@ function typingDelay(text: string): number {
  * state to get out of sync. */
 const FADE_PX = 20;
 
+/** The list's max-h, in px. Keep in step with max-h-[24rem] on the panel. */
+const MAX_PANEL_PX = 384;
+
 /* A side only fades while a chip is actually crossing that border. At rest
  * there is nothing to the left, so no left fade and the first chip lines up
  * flush with the composer and the bubbles. Scrolled to the far right, nothing
@@ -595,6 +598,8 @@ export function Chat() {
   }
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  /** The messages themselves, measured while the panel around them animates. */
+  const contentRef = useRef<HTMLDivElement>(null);
   /** Mirrors `scrolled` so the scroll handler only sets state on a change. */
   const scrolledRef = useRef(false);
   /** Previous scrollTop and the settle timer, for the bubble lag. */
@@ -722,15 +727,27 @@ export function Chat() {
     [commit],
   );
 
-  /* Keep the newest message in view.
-   *
-   * Flagged as ours, because this fires the same scroll handler a real scroll
-   * does. Without the flag the lag physics treated every auto-scroll as the
-   * visitor yanking the list, and shoved every bubble sideways each time a
-   * message arrived. */
+  /* Keep the newest message in view, once there is anything to keep in view. */
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el) return;
+    const content = contentRef.current;
+    if (!el || !content) return;
+
+    /* Until the conversation outgrows the panel's ceiling there is nothing to
+     * scroll to: the panel just gets taller and the newest message is already
+     * in view.
+     *
+     * Measuring the CONTENT rather than the box is the whole point. The panel
+     * eases its height over 320ms, so for those 320ms the box is shorter than
+     * the text inside it and reports itself as scrollable. Scrolling then
+     * pinned the newest bubble to the bottom of a gap that was in the middle
+     * of closing, and when the growth finished the browser clamped the scroll
+     * back to zero and the whole stack dropped: the bubble landing too high,
+     * then the gap snapping shut under it. */
+    if (content.scrollHeight <= MAX_PANEL_PX) return;
+
+    /* Flagged as ours, because this fires the same handler a real scroll does,
+     * and the lag physics must not read it as the visitor yanking the list. */
     programmaticScrollRef.current = true;
     el.scrollTop = el.scrollHeight;
     lastScrollTopRef.current = el.scrollTop;
@@ -967,7 +984,7 @@ export function Chat() {
         className="chat-scroll mr-8 max-h-[24rem] min-h-[15rem] overflow-y-auto pr-2 pt-1"
         aria-live="polite"
       >
-        <div className="space-y-2">
+        <div ref={contentRef} className="space-y-2">
           <Bubble
             message={{ role: "assistant", content: CHAT_GREETING }}
             animate={false}
@@ -978,8 +995,8 @@ export function Chat() {
           ))}
 
           <AnimatePresence mode="popLayout">
-          {pending && <TypingDots />}
-        </AnimatePresence>
+            {pending && <TypingDots />}
+          </AnimatePresence>
 
           {/* Clears the controls stacked at the bottom, so the newest message
               comes to rest above the glass rather than under it. */}
