@@ -8,13 +8,19 @@
  * hover, and on tap for anyone without a pointer.
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { useSound } from "@/components/sound";
 import type { OutboundLink } from "@/data/site";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
+
+/** Grace period before the notes start closing, so clipping the edge of the
+ *  list on your way somewhere else does not shut everything instantly. */
+const CLOSE_DELAY_MS = 600;
+/** Gap between each note closing, top to bottom. */
+const CLOSE_STAGGER_MS = 90;
 
 function Row({
   item,
@@ -138,24 +144,58 @@ export function LinkList({ items }: { items: OutboundLink[] }) {
    * Keyed by label, which is already unique enough to be the React key. */
   const [opened, setOpened] = useState<string[]>([]);
 
-  const open = (label: string) =>
-    setOpened((prev) => (prev.includes(label) ? prev : [...prev, label]));
+  /* Pending close timers. Held so that coming back to the list cancels a close
+   * already under way, rather than watching it finish and reopening. */
+  const closeTimers = useRef<number[]>([]);
 
-  const toggle = (label: string) =>
+  const cancelClose = () => {
+    for (const timer of closeTimers.current) window.clearTimeout(timer);
+    closeTimers.current = [];
+  };
+
+  useEffect(() => cancelClose, []);
+
+  const open = (label: string) => {
+    cancelClose();
+    setOpened((prev) => (prev.includes(label) ? prev : [...prev, label]));
+  };
+
+  const toggle = (label: string) => {
+    cancelClose();
     setOpened((prev) =>
       prev.includes(label)
         ? prev.filter((entry) => entry !== label)
         : [...prev, label],
     );
+  };
+
+  /* Close after a pause, then one at a time from the top down, so the list
+   * settles rather than collapsing all at once the instant you leave. */
+  const scheduleClose = () => {
+    cancelClose();
+    const inOrder = items
+      .map((item) => item.label)
+      .filter((label) => opened.includes(label));
+
+    inOrder.forEach((label, position) => {
+      closeTimers.current.push(
+        window.setTimeout(
+          () => setOpened((prev) => prev.filter((entry) => entry !== label)),
+          CLOSE_DELAY_MS + position * CLOSE_STAGGER_MS,
+        ),
+      );
+    });
+  };
 
   return (
     <ul
-      onMouseLeave={() => setOpened([])}
+      onMouseEnter={cancelClose}
+      onMouseLeave={scheduleClose}
       /* Same rule for the keyboard: only once focus has left the list
          entirely, not while it moves between rows inside it. */
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          setOpened([]);
+          scheduleClose();
         }
       }}
     >
