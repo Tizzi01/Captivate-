@@ -354,6 +354,55 @@ function easePageTo(bottomOf: () => number, duration = 700) {
   requestAnimationFrame(step);
 }
 
+/* Ease the message list down to its newest row.
+ *
+ * Assigning scrollTop moves the whole conversation in a single frame. When a
+ * new row appears that reads as the stack being yanked upward, which is the
+ * jolt; easing it means the text above glides instead.
+ *
+ * The bottom is recomputed every frame because the row that triggered this is
+ * still animating: the dots grow in, or a bubble stretches to fit its text, so
+ * a distance measured once at the start is already wrong by the end.
+ *
+ * Returns a cancel function. React runs it as effect cleanup, so a reply
+ * arriving mid glide replaces the animation rather than fighting it. */
+function easeListToBottom(el: HTMLElement, duration = 340): () => void {
+  let cancelled = false;
+  let frame = 0;
+
+  const stop = () => {
+    cancelled = true;
+    if (frame) cancelAnimationFrame(frame);
+    for (const e of ["wheel", "touchstart"]) el.removeEventListener(e, stop);
+  };
+
+  // Their own scrolling wins.
+  for (const e of ["wheel", "touchstart"]) {
+    el.addEventListener(e, stop, { passive: true, once: true });
+  }
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    el.scrollTop = el.scrollHeight;
+    stop();
+    return stop;
+  }
+
+  const start = el.scrollTop;
+  const t0 = performance.now();
+
+  const step = (now: number) => {
+    if (cancelled) return;
+    const t = Math.min(1, (now - t0) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.scrollTop = start + (el.scrollHeight - el.clientHeight - start) * eased;
+    if (t < 1) frame = requestAnimationFrame(step);
+    else stop();
+  };
+  frame = requestAnimationFrame(step);
+
+  return stop;
+}
+
 /** Gap left under the composer when the page eases the chat into view. */
 const BREATHING_ROOM = 28;
 
@@ -883,7 +932,7 @@ export function Chat() {
      * during the one opening transition. */
     if (content.scrollHeight <= PANEL_PX) return;
 
-    el.scrollTop = el.scrollHeight;
+    return easeListToBottom(el);
   }, [messages, pending]);
 
   /* Note: deliberately NOT aborting the in-flight request on unmount.
