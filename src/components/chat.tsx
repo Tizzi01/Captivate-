@@ -238,8 +238,9 @@ function typingDelay(text: string): number {
  * state to get out of sync. */
 const FADE_PX = 20;
 
-/** The list's max-h, in px. Keep in step with max-h-[24rem] on the panel. */
-const MAX_PANEL_PX = 384;
+/** The panel's height once opened, in px. It has exactly two sizes: the
+ *  height of the greeting alone, and this. */
+const PANEL_PX = 384;
 
 /* A side only fades while a chip is actually crossing that border. At rest
  * there is nothing to the left, so no left fade and the first chip lines up
@@ -720,24 +721,40 @@ export function Chat() {
     [commit],
   );
 
+  /* The panel rests at the height of the greeting alone, then opens to full
+   * size the first time a message is sent, and never resizes again.
+   *
+   * Two heights and one transition for the life of the conversation. A panel
+   * that grew with every reply was the source of the jolt: while it eased to
+   * its new height it was briefly shorter than the text inside it, so the list
+   * turned scrollable for a few hundred milliseconds and the stack shifted
+   * under the bubble that had just landed. A box that never changes size after
+   * the first message cannot do that. */
+  const openedRef = useRef(false);
+  useEffect(() => {
+    if (openedRef.current || messages.length === 0) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    openedRef.current = true;
+
+    /* Pin the current auto height so the transition has a number to ease FROM,
+     * force that to land, then set the target. Without the forced reflow the
+     * browser coalesces both writes and the panel snaps. */
+    el.style.height = `${el.getBoundingClientRect().height}px`;
+    void el.offsetHeight;
+    el.style.height = `${PANEL_PX}px`;
+  }, [messages.length]);
+
   /* Keep the newest message in view, once there is anything to keep in view. */
   useEffect(() => {
     const el = scrollRef.current;
     const content = contentRef.current;
     if (!el || !content) return;
 
-    /* Until the conversation outgrows the panel's ceiling there is nothing to
-     * scroll to: the panel just gets taller and the newest message is already
-     * in view.
-     *
-     * Measuring the CONTENT rather than the box is the whole point. The panel
-     * eases its height over 320ms, so for those 320ms the box is shorter than
-     * the text inside it and reports itself as scrollable. Scrolling then
-     * pinned the newest bubble to the bottom of a gap that was in the middle
-     * of closing, and when the growth finished the browser clamped the scroll
-     * back to zero and the whole stack dropped: the bubble landing too high,
-     * then the gap snapping shut under it. */
-    if (content.scrollHeight <= MAX_PANEL_PX) return;
+    /* Nothing to scroll to until the conversation is taller than the panel,
+     * and measuring the content rather than the box keeps that true even
+     * during the one opening transition. */
+    if (content.scrollHeight <= PANEL_PX) return;
 
     el.scrollTop = el.scrollHeight;
   }, [messages, pending]);
@@ -947,7 +964,7 @@ export function Chat() {
             setScrolled(top);
           }
         }}
-        className="chat-scroll mr-8 max-h-[24rem] min-h-[15rem] overflow-y-auto pr-2 pt-1"
+        className="chat-scroll mr-8 overflow-y-auto pr-2 pt-1"
         aria-live="polite"
       >
         <div ref={contentRef} className="space-y-2">

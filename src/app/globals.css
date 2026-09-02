@@ -284,9 +284,10 @@ body {
      message reflows at once: the jolt you see when the fifth message lands. */
   scrollbar-gutter: stable;
 
-  /* The panel grows with the conversation. Paired with interpolate-size below,
-     that growth eases instead of snapping. */
-  transition: height 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* The panel opens from the height of the greeting to its full size, once,
+     the first time a message is sent. Both ends are set in px by chat.tsx, so
+     this eases without needing interpolate-size. */
+  transition: height 420ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Lets height animate to and from `auto`. Newer browsers only; without it the
