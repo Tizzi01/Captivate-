@@ -223,9 +223,12 @@ function Bubble({
 const Composer = memo(function Composer({
   onSend,
   locked,
+  onWake,
 }: {
   onSend: (text: string) => void;
   locked: boolean;
+  /** Fired the first time someone reaches for the box. */
+  onWake?: () => void;
 }) {
   const [draft, setDraft] = useState("");
 
@@ -238,6 +241,10 @@ const Composer = memo(function Composer({
 
   return (
     <form
+      /* On the whole pill rather than the input alone, so arriving anywhere
+         near it counts as reaching for it. */
+      onPointerEnter={onWake}
+      onFocus={onWake}
       onSubmit={(event) => {
         event.preventDefault();
         submit();
@@ -1017,6 +1024,14 @@ export function Chat() {
    * arrived. A request left to finish after unmount is harmless; its state
    * updates are discarded. New sends still abort the previous one. */
 
+  /* Ease the page to the bottom, once, whichever of the two starts the
+   * conversation: reaching for the box, or typing into it. */
+  const easeIntoView = useCallback(() => {
+    if (pageEasedRef.current) return;
+    pageEasedRef.current = true;
+    easePageTo(() => document.documentElement.scrollHeight);
+  }, []);
+
   const send = useCallback(
     async (content: string) => {
       if (!content || exhaustedRef.current) return;
@@ -1064,10 +1079,7 @@ export function Chat() {
        * still scrolling the page by hand: easing the page under them there is
        * hostile, and their scrolling cancelled it anyway, which used up the
        * one shot before they had typed a word. */
-      if (!pageEasedRef.current) {
-        pageEasedRef.current = true;
-        easePageTo(() => document.documentElement.scrollHeight);
-      }
+      easeIntoView();
 
       try {
         const ask = () =>
@@ -1143,7 +1155,7 @@ export function Chat() {
         if (abortRef.current === controller) setPending(false);
       }
     },
-    [commit, flushPlayout, playOut],
+    [commit, flushPlayout, playOut, easeIntoView],
   );
 
   /* The opening exchange is scripted, not generated. It reads the same every
@@ -1168,19 +1180,23 @@ export function Chat() {
     await playOut([...CHAT_AUTO_REPLY], controller);
   }, [commit, playOut]);
 
-  /* Say hi by itself the first time someone scrolls the chat into view, so it
-   * reads as a live conversation rather than a screenshot.
+  /* Say hi the first time someone reaches for the box.
    *
-   * Guarded twice: a ref stops it firing more than once per mount, and
-   * sessionStorage stops it firing again on a refresh in the same tab. Each
-   * trigger is a real API request, so an unguarded version would burn the
-   * daily allowance on people who never type anything. */
-  useEffect(() => {
+   * It used to fire when the chat scrolled into view, which meant it started
+   * talking at everyone who scrolled past on their way to the bottom of the
+   * page, whether they wanted a conversation or not. Reaching for the box is
+   * the moment someone has decided they might.
+   *
+   * Hover and focus both, so it works for a mouse and for a phone, where there
+   * is no hover and tapping the box focuses it.
+   *
+   * Guarded three ways, because each greeting is a real API request: a ref
+   * stops it firing twice in one mount, sessionStorage stops it on a reload in
+   * the same tab, and an existing conversation means it has already happened. */
+  const wake = useCallback(() => {
     if (!CHAT_AUTO_MESSAGE || autoGreetedRef.current) return;
 
-    /* A conversation restored from a reload is already under way. Saying hello
-     * into the middle of it would be strange, and it would talk over what is
-     * already on screen. */
+    // Restored from a reload: saying hello into the middle of it would be odd.
     if (historySnapshot().length > 0) {
       autoGreetedRef.current = true;
       return;
@@ -1195,52 +1211,20 @@ export function Chat() {
       /* storage blocked; the ref guard alone still applies */
     }
 
-    /* A plain rect check on scroll rather than IntersectionObserver. IO is the
-     * tidier API but it silently never fires inside some embedded browser
-     * views, and a greeting that just doesn't happen is invisible to debug.
-     * This works anywhere getBoundingClientRect does. */
-    let lastCheck = 0;
-
-    const check = () => {
-      if (autoGreetedRef.current) return;
-      const node = scrollRef.current;
-      if (!node) return;
-
-      const rect = node.getBoundingClientRect();
-      const viewportHeight =
-        window.innerHeight || document.documentElement.clientHeight || 0;
-      // Mostly scrolled into view, not merely peeking over the bottom edge.
-      const inView = rect.top < viewportHeight * 0.9 && rect.bottom > 0;
-      if (!inView) return;
-
-      autoGreetedRef.current = true;
-      try {
-        window.sessionStorage.setItem(AUTO_GREET_KEY, "1");
-      } catch {
-        /* ignore */
-      }
-      stop();
-      void greet();
-    };
-
-    const onScroll = () => {
-      const now = Date.now();
-      if (now - lastCheck < 100) return;
-      lastCheck = now;
-      check();
-    };
-
-    function stop() {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+    autoGreetedRef.current = true;
+    try {
+      window.sessionStorage.setItem(AUTO_GREET_KEY, "1");
+    } catch {
+      /* ignore */
     }
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    check(); // in case the chat is already on screen at load
-
-    return stop;
-  }, [greet]);
+    /* The greeting used to be left out of this, back when it fired on scroll
+     * and moving the page under someone mid-scroll would have been hostile.
+     * It is triggered by reaching for the box now, so scrolling to it is what
+     * was being asked for. */
+    easeIntoView();
+    void greet();
+  }, [greet, easeIntoView]);
 
   return (
     /* Content sits at the TOP and the box grows downward: it opens at min-h
@@ -1343,7 +1327,7 @@ export function Chat() {
             onHoverChange={setChipsHover}
           />
         )}
-        <Composer onSend={send} locked={exhausted} />
+        <Composer onSend={send} locked={exhausted} onWake={wake} />
       </div>
 
       {/* Master control: its own element pinned to the far right of the panel,
