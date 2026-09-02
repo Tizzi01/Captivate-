@@ -376,89 +376,93 @@ body {
 
 /* Where the light lands. Follows the pointer on the slower spring, so it
    arrives a beat after the card has turned. */
-/* Light: a tighter, brighter core. White on a near-white card only reads if
-   the highlight has an edge to it, so the falloff is steeper than it looks
-   like it should be. */
+/* THE SURFACE, and where it lives: the edges.
+ *
+ * The first attempt put a soft dark radial opposite the highlight, on the
+ * theory that a lit side needs a shaded side. On a card full of text that
+ * lands as a grey smudge across the middle of what people are trying to read.
+ *
+ * Glass does not read in the middle. It reads at the edges: the side turned
+ * toward you catches a hard line of light, the opposite side falls into a thin
+ * dark one, and the whole pane lifts off the page as it turns. The middle
+ * stays clear, because that is where the words are.
+ */
+
+/* The specular. Small, soft, and nowhere near opaque: it says which way the
+   light is coming from, and then gets out of the way. */
 .tilt-glare {
   background: radial-gradient(
     circle at var(--gx, 50%) var(--gy, 50%),
-    rgb(255 255 255 / 0.95) 0%,
-    rgb(255 255 255 / 0.4) 14%,
-    rgb(255 255 255 / 0.08) 34%,
-    transparent 56%
+    rgb(255 255 255 / 0.5) 0%,
+    rgb(255 255 255 / 0.1) 18%,
+    transparent 40%
+  );
+  opacity: calc(var(--off, 0) * 0.85);
+}
+
+.dark .tilt-glare {
+  background: radial-gradient(
+    circle at var(--gx, 50%) var(--gy, 50%),
+    rgb(255 255 255 / 0.09) 0%,
+    rgb(255 255 255 / 0.035) 30%,
+    transparent 62%
   );
   opacity: calc(0.35 + var(--off, 0) * 0.65);
 }
 
-/* Dark: the opposite problem. A bright core on a dark card is a torch in the
-   eye, so there is no core at all here, just a wide, weak wash that falls off
-   slowly. Half the brightness over twice the distance. */
-.dark .tilt-glare {
-  background: radial-gradient(
-    circle at var(--gx, 50%) var(--gy, 50%),
-    rgb(255 255 255 / 0.07) 0%,
-    rgb(255 255 255 / 0.045) 34%,
-    rgb(255 255 255 / 0.02) 62%,
-    transparent 84%
-  );
-  opacity: calc(0.4 + var(--off, 0) * 0.6);
-}
-
-/* The band that slides across the face as it turns. Narrow and weak on
-   purpose: this is the one that tips from glass into gaudy if overdone. */
+/* A single narrow band travelling across the face. Weak enough that it never
+   competes with the text underneath it. */
 .tilt-sheen {
   background: linear-gradient(
     100deg,
-    transparent calc(var(--sheen, 50%) - 26%),
-    rgb(255 255 255 / 0.22) var(--sheen, 50%),
-    transparent calc(var(--sheen, 50%) + 26%)
+    transparent calc(var(--sheen, 50%) - 18%),
+    rgb(255 255 255 / 0.5) var(--sheen, 50%),
+    transparent calc(var(--sheen, 50%) + 18%)
   );
-  opacity: calc(var(--off, 0) * 0.9);
-  mix-blend-mode: overlay;
+  opacity: calc(var(--off, 0) * 0.5);
 }
 
 .dark .tilt-sheen {
   background: linear-gradient(
     100deg,
-    transparent calc(var(--sheen, 50%) - 26%),
-    rgb(255 255 255 / 0.1) var(--sheen, 50%),
-    transparent calc(var(--sheen, 50%) + 26%)
+    transparent calc(var(--sheen, 50%) - 18%),
+    rgb(255 255 255 / 0.07) var(--sheen, 50%),
+    transparent calc(var(--sheen, 50%) + 18%)
   );
 }
 
-/* The edge turned toward you catches the light, the other three do not. Four
-   inset shadows, each weighted by how far that edge has come forward, which is
-   what stops the card reading as a flat rectangle with a gradient on it. */
-/* The shading opposite the highlight, which is what actually makes the card
-   read as glass in light mode. A bright spot alone just looks like a bright
-   spot; a bright spot with the far side falling into shade looks like a
-   surface catching light. Sits on the rim layer so it needs no extra element. */
+/* The bevel, and the whole reason this reads as a physical pane.
+ *
+ * Every edge gets two lines: a bright one on the side turned toward you, and a
+ * dark one on the side turned away. Pairing them is what gives the edge
+ * thickness. A lit edge on its own just looks like a border.
+ *
+ * Then it lifts: the shadow under it grows and softens as it turns, which is
+ * what puts it above the page rather than printed on it. */
 .tilt-rim {
-  background: radial-gradient(
-    circle at calc(100% - var(--gx, 50%)) calc(100% - var(--gy, 50%)),
-    rgb(15 15 20 / 0.13) 0%,
-    rgb(15 15 20 / 0.05) 38%,
-    transparent 68%
-  );
   box-shadow:
-    inset 1px 0 0 rgb(255 255 255 / calc(var(--edge-l, 0) * 0.55)),
-    inset -1px 0 0 rgb(255 255 255 / calc(var(--edge-r, 0) * 0.55)),
-    inset 0 1px 0 rgb(255 255 255 / calc(var(--edge-t, 0) * 0.55)),
-    inset 0 -1px 0 rgb(255 255 255 / calc(var(--edge-b, 0) * 0.55));
+    inset 1.5px 0 0 rgb(255 255 255 / calc(var(--edge-l, 0) * 0.95)),
+    inset -1.5px 0 0 rgb(255 255 255 / calc(var(--edge-r, 0) * 0.95)),
+    inset 0 1.5px 0 rgb(255 255 255 / calc(var(--edge-t, 0) * 0.95)),
+    inset 0 -1.5px 0 rgb(255 255 255 / calc(var(--edge-b, 0) * 0.95)),
+    inset -1px 0 0 rgb(18 18 26 / calc(var(--edge-l, 0) * 0.09)),
+    inset 1px 0 0 rgb(18 18 26 / calc(var(--edge-r, 0) * 0.09)),
+    inset 0 -1px 0 rgb(18 18 26 / calc(var(--edge-t, 0) * 0.09)),
+    inset 0 1px 0 rgb(18 18 26 / calc(var(--edge-b, 0) * 0.09)),
+    0 calc(4px + var(--off, 0) * 12px) calc(12px + var(--off, 0) * 22px)
+      rgb(18 18 26 / calc(0.04 + var(--off, 0) * 0.09));
 }
 
 .dark .tilt-rim {
-  background: none;
   box-shadow:
-    inset 1px 0 0 rgb(255 255 255 / calc(var(--edge-l, 0) * 0.3)),
-    inset -1px 0 0 rgb(255 255 255 / calc(var(--edge-r, 0) * 0.3)),
-    inset 0 1px 0 rgb(255 255 255 / calc(var(--edge-t, 0) * 0.3)),
-    inset 0 -1px 0 rgb(255 255 255 / calc(var(--edge-b, 0) * 0.3));
+    inset 1.5px 0 0 rgb(255 255 255 / calc(var(--edge-l, 0) * 0.42)),
+    inset -1.5px 0 0 rgb(255 255 255 / calc(var(--edge-r, 0) * 0.42)),
+    inset 0 1.5px 0 rgb(255 255 255 / calc(var(--edge-t, 0) * 0.42)),
+    inset 0 -1.5px 0 rgb(255 255 255 / calc(var(--edge-b, 0) * 0.42)),
+    0 calc(4px + var(--off, 0) * 12px) calc(12px + var(--off, 0) * 22px)
+      rgb(0 0 0 / calc(0.16 + var(--off, 0) * 0.2));
 }
 
-/* Anyone who asked for less motion gets a card that simply sits there. The
-   script bails before it ever writes a variable, so this only has to undo the
-   transform the layers would otherwise inherit. */
 @media (prefers-reduced-motion: reduce) {
   .tilt-card {
     transform: none;
