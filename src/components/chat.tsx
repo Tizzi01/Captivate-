@@ -48,10 +48,8 @@ function Bubble({ message, animate }: { message: Message; animate: boolean }) {
       transition={{ duration: 0.28, ease: EASE }}
       className={`flex ${mine ? "justify-end" : "justify-start"}`}
     >
-      {/* bubble-lag lives on the inner pill, not the motion wrapper, so the
-          scroll physics and the enter animation never fight over transform. */}
       <span
-        className={`bubble-lag max-w-[60%] rounded-[20px] px-4 py-2 text-base leading-6 ${
+        className={`max-w-[60%] rounded-[20px] px-4 py-2 text-base leading-6 ${
           mine
             ? "bg-chat-blue text-white"
             : "bg-chat-bubble text-chat-bubble-text"
@@ -602,11 +600,6 @@ export function Chat() {
   const contentRef = useRef<HTMLDivElement>(null);
   /** Mirrors `scrolled` so the scroll handler only sets state on a change. */
   const scrolledRef = useRef(false);
-  /** Previous scrollTop and the settle timer, for the bubble lag. */
-  const lastScrollTopRef = useRef(0);
-  const lagResetRef = useRef(0);
-  /** True while WE are scrolling the list, so the lag physics sits it out. */
-  const programmaticScrollRef = useRef(false);
 
   /* Suggestion chips. Held here rather than inside Suggestions so the master
    * control can live outside the scrolling row, past the message scrollbar. */
@@ -746,15 +739,7 @@ export function Chat() {
      * then the gap snapping shut under it. */
     if (content.scrollHeight <= MAX_PANEL_PX) return;
 
-    /* Flagged as ours, because this fires the same handler a real scroll does,
-     * and the lag physics must not read it as the visitor yanking the list. */
-    programmaticScrollRef.current = true;
     el.scrollTop = el.scrollHeight;
-    lastScrollTopRef.current = el.scrollTop;
-    const id = window.setTimeout(() => {
-      programmaticScrollRef.current = false;
-    }, 120);
-    return () => window.clearTimeout(id);
   }, [messages, pending]);
 
   /* Note: deliberately NOT aborting the in-flight request on unmount.
@@ -953,33 +938,14 @@ export function Chat() {
       <div
         ref={scrollRef}
         onScroll={(event) => {
-          const el = event.currentTarget;
-
-          const top = el.scrollTop > 4;
+          /* Only the top scrim. Nothing here may move a bubble: a scroll-driven
+           * transform on the stack read as the whole conversation lurching
+           * every time a reply landed. */
+          const top = event.currentTarget.scrollTop > 4;
           if (top !== scrolledRef.current) {
             scrolledRef.current = top;
             setScrolled(top);
           }
-
-          /* Scroll physics: push the bubbles opposite to the direction of
-           * travel by an amount proportional to how fast you moved, then let
-           * them settle back. Scrolling down makes the stack drop behind you;
-           * scrolling up flicks it back. The spring-back is the CSS transition
-           * on .bubble-lag, triggered by resetting the value once you pause.
-           *
-           * Only for scrolls the visitor caused. Auto-scrolling to a new
-           * message is not someone dragging the list. */
-          const delta = el.scrollTop - lastScrollTopRef.current;
-          lastScrollTopRef.current = el.scrollTop;
-          if (programmaticScrollRef.current) return;
-
-          const lag = Math.max(-16, Math.min(16, delta * 0.7));
-          el.style.setProperty("--bubble-lag", `${lag}px`);
-
-          window.clearTimeout(lagResetRef.current);
-          lagResetRef.current = window.setTimeout(() => {
-            el.style.setProperty("--bubble-lag", "0px");
-          }, 80);
         }}
         className="chat-scroll mr-8 max-h-[24rem] min-h-[15rem] overflow-y-auto pr-2 pt-1"
         aria-live="polite"

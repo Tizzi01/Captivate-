@@ -222,7 +222,6 @@ body {
   -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
 }
 
-
 /* ============================================================================
  *  GLASS PILL — one self-contained glass object.
  *
@@ -323,11 +322,4 @@ body {
 
 .dark .chat-scroll::-webkit-scrollbar-thumb:hover {
   background-color: rgb(255 255 255 / 0.4);
-}
-
-/* Bubbles lag behind a fast scroll and settle back, so the stack feels like it
-   has weight. --bubble-lag is written by the scroll handler in chat.tsx. */
-.bubble-lag {
-  transform: translateY(var(--bubble-lag, 0px));
-  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
 }
