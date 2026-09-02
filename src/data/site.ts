@@ -170,7 +170,7 @@ export const bio: Paragraph[] = [
     {
       kind: "text",
       value:
-        "Started out as a video editor and now I'm obsessed with all things YouTube :) Also heading into my senior year of high school.",
+        "Started out as a video editor and now I'm obsessed with all things YouTube. Also heading into my senior year of high school.",
     },
   ],
   [
