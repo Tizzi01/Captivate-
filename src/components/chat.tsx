@@ -904,15 +904,14 @@ export function Chat() {
   }, [greet]);
 
   return (
-    /* Fixed height, content aligned to the TOP. That combination is what gives
-     * the reference its calm: the conversation starts under the heading and
-     * the open space sits below it, so the controls rest at the bottom of a
-     * settled box instead of hugging the last message.
+    /* Content sits at the TOP and the box grows downward: it opens at min-h
+     * with some room under the greeting, and stretches to max-h as the
+     * conversation fills it, then scrolls.
      *
-     * Both halves matter. Fixed height with bottom-aligned content stranded a
-     * lone greeting at the floor; auto height with top-aligned content removed
-     * the space altogether. */
-    <div className="relative h-[24rem]">
+     * Top alignment is the half that matters most. Bottom-aligned content in
+     * a fixed box stranded a lone greeting at the floor. A fixed 24rem box
+     * was right for a full conversation but far too tall for one message. */
+    <div className="relative">
       {/* Right-hand edges, panel-relative, are deliberate and must not overlap:
        *    controls (chips + composer) end at  panel - 48
        *    message scrollbar occupies          panel - 38 .. panel - 32
@@ -946,7 +945,7 @@ export function Chat() {
             el.style.setProperty("--bubble-lag", "0px");
           }, 80);
         }}
-        className="chat-scroll mr-8 h-full overflow-y-auto pr-2 pt-1"
+        className="chat-scroll mr-8 max-h-[24rem] min-h-[15rem] overflow-y-auto pr-2 pt-1"
         aria-live="polite"
       >
         <div className="space-y-2">
