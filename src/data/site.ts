@@ -250,15 +250,15 @@ export const otherStuff: Paragraph[] = [
             body: "Genuinely one of the most underrated skills to have. Saves a ton of time in the long run.",
           },
         ],
+        [
+          { kind: "text", value: "The skill I'm most proud of: " },
+          {
+            kind: "spoiler",
+            value: "I can make it work",
+            reveal: "I can make it work.",
+          },
+        ],
       ],
-    },
-  ],
-  [
-    { kind: "text", value: "The skill I'm most proud of: " },
-    {
-      kind: "spoiler",
-      value: "I can make it work",
-      reveal: "I can make it work.",
     },
   ],
 ];
