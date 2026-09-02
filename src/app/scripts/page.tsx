@@ -101,7 +101,7 @@ export default async function ScriptsPage() {
               href={DISCORD_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="underline decoration-line underline-offset-4 transition-colors duration-200 hover:text-ink hover:decoration-current"
+              className="text-accent underline underline-offset-4"
             >
               Discord
             </a>

@@ -215,13 +215,11 @@ export const otherStuff: Paragraph[] = [
         {
           src: "/japan/arcade.jpg",
           alt: "Participants building arcade cabinets at Spacebar Studio",
-          group: "made-it",
           caption: "From the people who made it.",
         },
         {
           src: "/japan/room.png",
           alt: "Someone asleep in a bunk at the venue",
-          group: "made-it",
         },
         {
           src: "/japan/ticket.png",

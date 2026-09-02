@@ -105,11 +105,14 @@ export function composeStack(
 export function Slam({
   placed,
   idx,
+  z = 1,
   className = "",
   children,
 }: {
   placed: Placed;
   idx: number;
+  /** Where it sits in the pile. Raised while it is being dragged. */
+  z?: number;
   className?: string;
   children: ReactNode;
 }) {
@@ -128,6 +131,9 @@ export function Slam({
   const outer: CSSProperties = {
     transform: `translate(calc(${placed.dx.toFixed(2)}px + var(--px, 0px)), var(--py, 0px)) rotate(var(--pr, 0deg)) scale(var(--ps, 1))`,
     lineHeight: 0,
+    // Positioned so it can be stacked, and lifted above its neighbours on grab.
+    position: "relative",
+    zIndex: z,
     cursor: "grab",
     // Otherwise the browser scrolls the page instead of letting go of a drag.
     touchAction: "none",

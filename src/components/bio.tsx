@@ -116,9 +116,11 @@ function RevealSegment({
         onClick={() => setOpen((prev) => !prev)}
         onFocus={show}
         aria-expanded={open}
-        className="cursor-help text-ink underline decoration-accent decoration-dotted decoration-1 underline-offset-4 transition-colors duration-200 hover:text-accent"
+        className="cursor-help group relative text-ink transition-colors duration-200 hover:text-accent"
       >
         {segment.value}
+        <span className="absolute -bottom-px left-0 h-px w-full origin-left scale-x-0 bg-accent transition-transform duration-300 ease-out group-hover:scale-x-100" />
+        <span className="absolute -bottom-px left-0 h-px w-full bg-line" />
       </button>
 
       <AnimatePresence>
@@ -215,7 +217,7 @@ function SpoilerSegment({
 /* -------------------------------------------------------------- gallery -- */
 
 /** How far each picture tucks under the one above it, in px. */
-const PILE_OVERLAP = 34;
+const PILE_OVERLAP = 18;
 
 type ImageGroup = {
   images: GalleryImage[];
@@ -281,13 +283,11 @@ function GalleryPictures({
           /* Each one tucks under the bottom of the one above it, and sits on
              top of it, so the stack reads as a pile with depth rather than a
              list with gaps. */
-          style={{
-            marginTop: gi === 0 ? 0 : -PILE_OVERLAP,
-            zIndex: gi + 1,
-            position: "relative",
-          }}
+          style={{ marginTop: gi === 0 ? 0 : -PILE_OVERLAP }}
         >
-          <Slam placed={stack[gi]} idx={gi} className="block">
+          {/* Stacking order lives on the Slam, not here, so that picking a
+              picture up can lift it above the others. */}
+          <Slam placed={stack[gi]} idx={gi} z={gi + 1} className="block">
             <figure className="relative">
               {group.images.map((image, ii) => (
                 <span
@@ -318,8 +318,12 @@ function GalleryPictures({
               {/* Captions sit at the TOP of their picture, not the bottom.
                   The next picture in the pile overlaps this one's bottom edge,
                   so a caption down there would be buried by it. */}
+              {/* A label stuck on at the edge, not printed across the
+                  picture. It hangs off the top so it covers none of the image
+                  itself, and sits in the seam where the picture above overlaps
+                  this one. */}
               {group.caption && !group.overlay && (
-                <figcaption className="pointer-events-none absolute left-3 top-3 rounded-md border border-line bg-bg/85 px-2 py-1 text-xs leading-snug text-ink backdrop-blur-sm">
+                <figcaption className="pointer-events-none absolute -top-3 left-5 -rotate-2 rounded-[3px] border border-line bg-surface px-2 py-1 text-xs leading-snug text-ink shadow-[0_2px_6px_rgba(20,20,25,0.16)]">
                   {group.caption}
                 </figcaption>
               )}
@@ -388,9 +392,11 @@ function GallerySegment({
           onFocus={showCard}
           aria-expanded={card}
           title={segment.teaser}
-          className="cursor-help text-ink underline decoration-accent decoration-dotted decoration-1 underline-offset-4 transition-colors duration-200 hover:text-accent"
+          className="cursor-help group relative text-ink transition-colors duration-200 hover:text-accent"
         >
           {segment.value}
+          <span className="absolute -bottom-px left-0 h-px w-full origin-left scale-x-0 bg-accent transition-transform duration-300 ease-out group-hover:scale-x-100" />
+          <span className="absolute -bottom-px left-0 h-px w-full bg-line" />
         </button>
 
         <AnimatePresence>
@@ -400,9 +406,13 @@ function GallerySegment({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute left-0 top-full z-40 block w-[min(21rem,calc(100vw-3rem))] pt-3 sm:left-full sm:top-0 sm:w-[21rem] sm:pl-3 sm:pt-0"
+              /* No card, no box. It reads as the sentence carrying on past
+                 the phrase, so it is plain text set beside it, picking up
+                 where the line left off. Under it on a narrow screen, where
+                 there is no room alongside. */
+              className="absolute left-0 top-full z-40 block w-[min(22rem,calc(100vw-3rem))] pt-2 text-left sm:left-full sm:top-0 sm:w-[22rem] sm:pl-2 sm:pt-0"
             >
-              <span className="block rounded-lg border border-line bg-surface p-5 text-left shadow-[0_12px_40px_-12px_rgb(0_0_0/0.18)]">
+              <span className="block">
                 <span className="block text-muted">
                   {segment.lead}
                   <button
@@ -411,9 +421,11 @@ function GallerySegment({
                       play("click");
                       setOpen(true);
                     }}
-                    className="text-ink underline decoration-accent decoration-dotted decoration-1 underline-offset-4 transition-colors duration-200 hover:text-accent"
+                    className="group relative text-ink transition-colors duration-200 hover:text-accent"
                   >
                     {segment.trigger}
+                    <span className="absolute -bottom-px left-0 h-px w-full origin-left scale-x-0 bg-accent transition-transform duration-300 ease-out group-hover:scale-x-100" />
+                    <span className="absolute -bottom-px left-0 h-px w-full bg-line" />
                   </button>
                   {segment.tail}
                 </span>
@@ -430,7 +442,11 @@ function GallerySegment({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 grid place-items-center bg-bg/80 p-6 backdrop-blur-sm"
+            /* The whole screen, and the scroller itself. This used to be a
+               narrow bordered box with its own scrollbar, which is a cage:
+               there was nowhere to drag a picture to. The pictures now sit in
+               open space with room either side of them. */
+            className="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden bg-bg/85 px-6 py-16 backdrop-blur-sm"
             onClick={() => setOpen(false)}
             role="dialog"
             aria-modal="true"
@@ -442,15 +458,15 @@ function GallerySegment({
               exit={{ opacity: 0, y: 8, scale: 0.99 }}
               transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
               onClick={(event) => event.stopPropagation()}
-              className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-xl border border-line bg-surface p-6"
+              className="mx-auto w-full max-w-md"
             >
-              <div className="flex items-start justify-between gap-4">
+              <div className="mb-2 flex items-start justify-between gap-4">
                 <h3 className="text-ink">{segment.title}</h3>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
                   aria-label="Close"
-                  className="grid size-6 shrink-0 place-items-center rounded-full text-muted transition-colors duration-200 hover:text-ink"
+                  className="fixed right-6 top-6 z-10 grid size-8 place-items-center rounded-full border border-line bg-bg/80 text-muted backdrop-blur-sm transition-colors duration-200 hover:text-ink"
                 >
                   <svg
                     viewBox="0 0 24 24"

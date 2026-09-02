@@ -48,6 +48,8 @@ const ASLEEP = 0.01;
 type Node = {
   el: HTMLElement;
   depth: number;
+  /** Its place in the pile, restored when it is put back down. */
+  baseZ: string;
   x: number;
   y: number;
   r: number;
@@ -99,6 +101,7 @@ export function useMagnetism(host: RefObject<HTMLElement | null>): void {
         nodes.set(el, {
           el,
           depth: Number(el.dataset.depth ?? 0.6),
+          baseZ: el.style.zIndex,
           x: 0,
           y: 0,
           r: 0,
@@ -278,6 +281,9 @@ export function useMagnetism(host: RefObject<HTMLElement | null>): void {
 
       node.dragging = true;
       node.el.dataset.dragging = "true";
+      // Held pictures come to the front, so you can actually read the one you
+      // are holding rather than the ones stacked on top of it.
+      node.el.style.zIndex = "500";
       node.grabX = event.clientX - node.x;
       node.grabY = event.clientY - node.y;
       wake();
@@ -288,6 +294,7 @@ export function useMagnetism(host: RefObject<HTMLElement | null>): void {
         if (!node.dragging) continue;
         node.dragging = false;
         delete node.el.dataset.dragging;
+        node.el.style.zIndex = node.baseZ;
         try {
           node.el.releasePointerCapture(event.pointerId);
         } catch {
