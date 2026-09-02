@@ -118,13 +118,44 @@ export async function getChannelStats(
     const avatarUrl =
       thumbs.medium?.url ?? thumbs.high?.url ?? thumbs.default?.url ?? null;
 
+    const live = {
+      subscribers: toInt(item.statistics.subscriberCount),
+      views: toInt(item.statistics.viewCount),
+      videos: toInt(item.statistics.videoCount),
+    };
+
+    /* A channel with everything unlisted answers, but with nothing in it.
+     *
+     * YouTube only counts PUBLIC videos in these figures, so a channel whose
+     * uploads are all unlisted reports zero videos and zero views however many
+     * views they have actually earned. Showing that would say the channel has
+     * no audience, which is the opposite of true.
+     *
+     * So where the API sees nothing public and the channel carries recorded
+     * numbers, the recorded ones are used for views and videos. The subscriber
+     * count stays live, because that one is public and correct either way.
+     *
+     * This resolves itself: the moment the videos are made public the API
+     * reports real figures, this branch stops running, and the recorded
+     * numbers can be deleted. */
+    const nothingPublic = live.videos === 0 && live.views === 0;
+    if (nothingPublic && channel.fallback) {
+      return {
+        ...channel,
+        stats: {
+          subscribers: live.subscribers,
+          views: channel.fallback.views,
+          videos: channel.fallback.videos,
+        },
+        source: "fallback" as const,
+        avatarUrl,
+        subscribersHidden: Boolean(item.statistics.hiddenSubscriberCount),
+      };
+    }
+
     return {
       ...channel,
-      stats: {
-        subscribers: toInt(item.statistics.subscriberCount),
-        views: toInt(item.statistics.viewCount),
-        videos: toInt(item.statistics.videoCount),
-      },
+      stats: live,
       source: "live" as const,
       avatarUrl,
       subscribersHidden: Boolean(item.statistics.hiddenSubscriberCount),

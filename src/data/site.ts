@@ -358,7 +358,15 @@ export const channels: Channel[] = [
     channelId: "UCru3lHd7hvDsOePEIKeK9Vw",
     role: "Strategy + packaging",
     note: "A smaller channel with an outsized hit. Proof that the packaging approach carries across formats.",
-    highlight: "One video past 200k views",
+    highlight: "One video past 185k views",
+    /* Every video on this channel is currently unlisted, so YouTube reports
+       zero videos and zero views for it however many it has really had. These
+       are the real figures, counted by hand from Studio on 2 Sep 2026: nine
+       videos totalling 277,968 views, the largest 185,078.
+
+       Delete this block once the videos are public. The API will report the
+       true numbers by itself and they will be live from then on. */
+    fallback: { subscribers: 3500, views: 277968, videos: 9 },
   },
 ];
 
