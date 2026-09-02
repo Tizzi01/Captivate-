@@ -232,6 +232,31 @@ const Composer = memo(function Composer({
 }) {
   const [draft, setDraft] = useState("");
 
+  /* Hover only counts if it is held. A pointer crossing the box on its way
+   * somewhere else is not someone starting a conversation, and starting one at
+   * them costs a real API request.
+   *
+   * Focus is exempt from the wait: tapping or tabbing to the box is already
+   * deliberate, and on a phone there is no hover to hold in the first place. */
+  const intent = useRef<number | undefined>(undefined);
+
+  const holdStart = () => {
+    if (!onWake || intent.current) return;
+    intent.current = window.setTimeout(() => {
+      intent.current = undefined;
+      onWake();
+    }, HOVER_INTENT_MS);
+  };
+
+  const holdCancel = () => {
+    if (!intent.current) return;
+    window.clearTimeout(intent.current);
+    intent.current = undefined;
+  };
+
+  // Leaving the page mid-wait should not fire it later.
+  useEffect(() => holdCancel, []);
+
   const submit = () => {
     const text = draft.trim();
     if (!text || locked) return;
@@ -243,7 +268,8 @@ const Composer = memo(function Composer({
     <form
       /* On the whole pill rather than the input alone, so arriving anywhere
          near it counts as reaching for it. */
-      onPointerEnter={onWake}
+      onPointerEnter={holdStart}
+      onPointerLeave={holdCancel}
       onFocus={onWake}
       onSubmit={(event) => {
         event.preventDefault();
@@ -357,6 +383,24 @@ function splitIntoMessages(reply: string): string[] {
 /* Let a bubble finish stretching into place before the next set of dots
  * appears under it. The morph is a spring and takes about 450ms; starting the
  * next row on top of it is the stutter you get otherwise. */
+/* Starting a conversation is three separate movements, and they have to
+ * happen one after another. All three at once was the complaint: the page
+ * lurches, the panel grows and the text lands in the same instant, so none of
+ * it reads as one thing causing the next.
+ *
+ * Rest on the box, then the page travels, then the panel opens.
+ */
+
+/** How long the pointer must rest on the box before it counts as intent.
+ *  Brushing past on the way somewhere else should not start anything. */
+const HOVER_INTENT_MS = 700;
+
+/** The length of the page journey. Matches easePageTo default duration. */
+const PAGE_EASE_MS = 700;
+
+/** A breath between the movements, so they read as consecutive not merged. */
+const BEAT_MS = 90;
+
 const BUBBLE_SETTLE_MS = 380;
 
 /* How long the dots stay up before the next bubble replaces them.
@@ -1218,12 +1262,28 @@ export function Chat() {
       /* ignore */
     }
 
-    /* The greeting used to be left out of this, back when it fired on scroll
-     * and moving the page under someone mid-scroll would have been hostile.
-     * It is triggered by reaching for the box now, so scrolling to it is what
-     * was being asked for. */
+    /* One: the page travels to the bottom, alone.
+     *
+     * This used to be left out entirely, back when the greeting fired on
+     * scroll and moving the page under someone mid-scroll would have been
+     * hostile. It is reached for now, so travelling to it is what was asked. */
     easeIntoView();
-    void greet();
+
+    /* Two: only once it has arrived does the panel open and the conversation
+     * start. Waiting out the whole journey rather than starting partway
+     * through is the entire difference between three things happening in order
+     * and three things happening at once. */
+    window.setTimeout(() => {
+      void greet();
+
+      /* Three: opening the panel makes the page taller, so the bottom it just
+       * travelled to is no longer the bottom. This follows it down, overlapping
+       * the opening rather than trailing it, so the page reads as being carried
+       * by the growth instead of lurching a second time after it. */
+      window.setTimeout(() => {
+        easePageTo(() => document.documentElement.scrollHeight);
+      }, BEAT_MS);
+    }, PAGE_EASE_MS + BEAT_MS);
   }, [greet, easeIntoView]);
 
   return (
