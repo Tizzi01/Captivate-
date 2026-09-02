@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { ChannelCard } from "@/components/channel-card";
 import { FadeIn } from "@/components/fade-in";
 import { BackLink } from "@/components/back-link";
-import { BRAND, orderedChannels, person } from "@/data/site";
+import { BRAND, NETWORK_NOTE, orderedChannels, person } from "@/data/site";
 import { compact } from "@/lib/format";
 import { isUnlocked } from "@/lib/unlock";
 import { getChannelStats } from "@/lib/youtube";
@@ -54,8 +54,9 @@ export default async function NetworkPage() {
         acc.subscribers +
         (channel.subscribersHidden ? 0 : channel.stats!.subscribers),
       views: acc.views + channel.stats!.views,
+      videos: acc.videos + channel.stats!.videos,
     }),
-    { subscribers: 0, views: 0 },
+    { subscribers: 0, views: 0, videos: 0 },
   );
 
   const isLive = resolved.some((channel) => channel.source === "live");
@@ -134,7 +135,42 @@ export default async function NetworkPage() {
         ))}
       </section>
 
-      <FadeIn delay={0.7}>
+      {/* The network at a glance, under the cards.
+       *
+       * Every number here is added up from the same live response the cards
+       * use, so the summary can never disagree with the grid above it. */}
+      <FadeIn delay={0.6}>
+        <section className="mt-14 border-t border-line pt-10">
+          <dl className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+            <div>
+              <dt className="text-ink">Views</dt>
+              <dd className="mt-0.5 text-muted">Across all channels</dd>
+              <dd className="mt-3 text-3xl text-ink">
+                {anyStats ? compact(totals.views) : "-"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-ink">Videos</dt>
+              <dd className="mt-0.5 text-muted">Long form, published</dd>
+              <dd className="mt-3 text-3xl text-ink">
+                {anyStats ? totals.videos : "-"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-ink">Channels</dt>
+              <dd className="mt-0.5 text-muted">Growing network</dd>
+              <dd className="mt-3 text-3xl text-ink">{channels.length}</dd>
+            </div>
+          </dl>
+
+          <p className="mt-8 max-w-md text-sm text-muted">
+            These come straight from the YouTube Data API and refresh on their
+            own, so they are never typed in by hand. {NETWORK_NOTE}
+          </p>
+        </section>
+      </FadeIn>
+
+      <FadeIn delay={0.75}>
         <footer className="mt-20 flex flex-wrap items-center justify-between gap-3 text-muted">
           <p>
             {BRAND} · {new Date().getFullYear()}

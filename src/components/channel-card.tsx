@@ -78,7 +78,7 @@ export function ChannelCard({
                 onPointerEnter: () => play("hover"),
                 onClick: () => play("click"),
               })}
-          className={`group flex h-full flex-col rounded-lg border border-line bg-surface p-5 transition-all duration-300 ease-out ${
+          className={`group relative flex h-full flex-col rounded-lg border border-line bg-surface p-5 transition-all duration-300 ease-out ${
             locked ? "" : "hover:border-ink/25"
           }`}
         >
@@ -121,7 +121,9 @@ export function ChannelCard({
               )}
               <div>
                 <h3 className="leading-tight text-ink">{channel.name}</h3>
-                <p className="mt-0.5 text-muted">{channel.role}</p>
+                {channel.role && (
+                  <p className="mt-0.5 text-muted">{channel.role}</p>
+                )}
               </div>
             </div>
 
@@ -160,6 +162,24 @@ export function ChannelCard({
 
           {/* note */}
           <p className="mt-4 flex-1 text-muted">{channel.note}</p>
+
+          {/* Someone to thank. Sits over the card on hover rather than taking a
+            permanent line of its own: it belongs to this channel, but it is
+            not what the card is for. */}
+          {channel.credit && (
+            <span className="pointer-events-none absolute inset-x-3 bottom-3 z-10 flex items-start gap-2.5 rounded-lg border border-line bg-surface/95 p-3 opacity-0 shadow-[0_10px_30px_-12px_rgb(0_0_0/0.35)] backdrop-blur-sm transition-opacity duration-300 ease-out group-hover:opacity-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={channel.credit.avatar}
+                alt=""
+                className="size-9 shrink-0 rounded-full border border-line object-cover"
+                loading="lazy"
+              />
+              <span className="text-xs leading-snug text-muted">
+                {channel.credit.text}
+              </span>
+            </span>
+          )}
 
           {channel.highlight && (
             <p className="mt-4 inline-flex w-fit items-center gap-2 rounded-full border border-line px-2.5 py-0.5 text-xs text-muted">

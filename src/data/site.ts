@@ -98,7 +98,10 @@ export type Channel = {
   /** The UC... id from the channel URL. Used for the API call. */
   channelId: string;
   /** Short role line, shown under the name. */
-  role: string;
+  /** Optional one-liner under the name. */
+  role?: string;
+  /** Someone to thank, shown when the card is hovered. */
+  credit?: { name: string; avatar: string; text: string };
   /** The strategy note — one or two sentences. */
   note: string;
   /** Optional badge, e.g. a standout video result. */
@@ -342,22 +345,28 @@ export const scripts: Script[] = [
 
 /* -------------------------------------------------------------- channels -- */
 
+/** Shown under the grid. */
+export const NETWORK_NOTE = "More channels will be added soon.";
+
 /** Append to this array to add a channel. No component changes needed. */
 export const channels: Channel[] = [
   {
     slug: "staranime",
-    name: "staranime",
+    name: "Star Anime",
     channelId: "UCW-RsP9NXc_4pWZqucRnPAA",
-    role: "Strategy lead",
-    note: "The flagship channel and the fastest-growing one in the network. I lead strategy end to end here: packaging, retention structure, and release cadence.",
+    note: "The flagship channel and the fastest-growing one in the network. I do everything on it myself apart from the scripts and the voiceover, and I still review every script closely.",
+    credit: {
+      name: "Alserex",
+      avatar: "/people/alserex.png",
+      text: "Huge shoutout to Alserex, couldn't have done it without him. 10/10 voiceovers, literally THE best person I could have met for this 🍀",
+    },
     flagship: true,
   },
   {
     slug: "also-ran",
-    name: "also ran",
+    name: "Forge",
     channelId: "UCru3lHd7hvDsOePEIKeK9Vw",
-    role: "Strategy + packaging",
-    note: "A smaller channel with an outsized hit. Proof that the packaging approach carries across formats.",
+    note: "Every video here is temporarily unlisted. I don't really post on this one anymore, but it gave me my first taste of success with long form YouTube.",
     highlight: "One video past 185k views",
     /* Every video on this channel is currently unlisted, so YouTube reports
        zero videos and zero views for it however many it has really had. These
