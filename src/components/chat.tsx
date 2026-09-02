@@ -36,10 +36,51 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 /** sessionStorage flag so a refresh in the same tab does not re-greet. */
 const AUTO_GREET_KEY = "captivate:greeted";
 
+/* A row of the conversation. `content: null` is the reply that has not landed
+ * yet, drawn as the typing dots.
+ *
+ * The same row object becomes the real message when it arrives, which is the
+ * point: the bubble is one element that changes what is inside it, not a
+ * typing bubble discarded and a text bubble popped into its place. */
+type Row = { role: Message["role"]; content: string | null };
+
+function Dots() {
+  return (
+    <span className="flex items-center gap-1 py-1.5">
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          className="size-1.5 rounded-full bg-chat-bubble-text/45"
+          animate={{ opacity: [0.3, 1, 0.3], y: [0, -2, 0] }}
+          transition={{
+            duration: 1.1,
+            repeat: Infinity,
+            delay: i * 0.16,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
 /* Bubble geometry is taken directly off the reference: 20px radius,
  * 8px/16px padding, 16px text on a 24px line, capped at 60% width. */
-function Bubble({ message, animate }: { message: Message; animate: boolean }) {
+function Bubble({
+  message,
+  animate,
+  live = false,
+}: {
+  message: Row;
+  animate: boolean;
+  /* Whether this is the bubble a reply is currently landing in. Only that one
+   * gets a layout animation: `layout` measures against the viewport, and
+   * inside a scrolling list every bubble would try to animate whenever the
+   * list scrolled. */
+  live?: boolean;
+}) {
   const mine = message.role === "user";
+  const typing = message.content === null;
 
   return (
     <motion.div
@@ -48,59 +89,52 @@ function Bubble({ message, animate }: { message: Message; animate: boolean }) {
       transition={{ duration: 0.28, ease: EASE }}
       className={`flex ${mine ? "justify-end" : "justify-start"}`}
     >
-      <span
+      <motion.span
+        layout={live}
+        transition={{ duration: 0.34, ease: EASE }}
         className={`max-w-[60%] rounded-[20px] px-4 py-2 text-base leading-6 ${
           mine
             ? "bg-chat-blue text-white"
             : "bg-chat-bubble text-chat-bubble-text"
         }`}
+        aria-label={typing ? "typing" : undefined}
       >
-        {message.content}
-      </span>
-    </motion.div>
-  );
-}
-
-function TypingDots() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.24, ease: EASE }}
-      className="flex justify-start"
-      aria-label="typing"
-    >
-      <span className="flex items-center gap-1 rounded-[20px] bg-chat-bubble px-4 py-3.5">
-        {[0, 1, 2].map((i) => (
+        {typing ? (
+          <Dots />
+        ) : (
+          /* `layout` here too, so Motion undoes the parent's scale on the way
+             through. Without it the text is squashed while the bubble grows. */
           <motion.span
-            key={i}
-            className="size-1.5 rounded-full bg-chat-bubble-text/45"
-            animate={{ opacity: [0.3, 1, 0.3], y: [0, -2, 0] }}
-            transition={{
-              duration: 1.1,
-              repeat: Infinity,
-              delay: i * 0.16,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
-      </span>
+            layout={live}
+            /* Only the reply fades its text in, as the bubble it lands in
+               stretches to fit. A message you sent yourself arrives whole,
+               the way it does in iMessage. This is read at mount, which is
+               exactly the moment the dots turn into text. */
+            initial={live && animate ? { opacity: 0 } : false}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, ease: EASE, delay: 0.06 }}
+            className="block"
+          >
+            {message.content}
+          </motion.span>
+        )}
+      </motion.span>
     </motion.div>
   );
 }
 
-/* The dots deliberately have no exit animation, and are deliberately not
- * wrapped in AnimatePresence.
+/* Why the dots are a row of the list rather than something rendered after it.
  *
- * Both would delay their removal past the render that adds the reply, and for
- * those frames the list holds the dots AND the bubble that replaces them: it
- * is a row too tall, the view follows it down, and the whole conversation
- * shifts up. A frame later the dots go and everything drops back. That was the
- * bubble landing too high with the gap snapping shut under it.
+ * They occupy the exact slot the reply will land in, so when it arrives React
+ * updates that row in place instead of unmounting one element and mounting
+ * another. The bubble stretches to fit the text and the text fades in, the way
+ * iMessage does it, rather than one bubble vanishing and another popping in.
  *
- * setPending(false) and the new message are set together, so React commits
- * them as one render. With nothing to wait for, the swap is a single layout
- * change and there is no intermediate state to see. */
+ * It is also what keeps the list still. An exit animation, or AnimatePresence,
+ * would hold the dots' space past the render that adds the reply, and for
+ * those frames the list holds both: a row too tall, the view follows it down,
+ * the conversation shifts up, and a moment later it all drops back. That was
+ * the bubble landing too high with the gap snapping shut under it. */
 
 /* ------------------------------------------------------------- composer -- */
 
@@ -1062,11 +1096,17 @@ export function Chat() {
             animate={false}
           />
 
-          {messages.map((message, index) => (
-            <Bubble key={index} message={message} animate />
+          {(pending
+            ? [...messages, { role: "assistant" as const, content: null }]
+            : messages
+          ).map((row, index, rows) => (
+            <Bubble
+              key={index}
+              message={row}
+              animate
+              live={index === rows.length - 1 && row.role === "assistant"}
+            />
           ))}
-
-          {pending && <TypingDots />}
 
           {/* Clears the controls stacked at the bottom, so the newest message
               comes to rest above the glass rather than under it. */}
