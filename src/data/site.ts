@@ -367,7 +367,6 @@ export const channels: Channel[] = [
     name: "Forge",
     channelId: "UCru3lHd7hvDsOePEIKeK9Vw",
     note: "Every video here is temporarily unlisted. I don't really post on this one anymore, but it gave me my first taste of success with long form YouTube.",
-    highlight: "One video past 185k views",
     /* Every video on this channel is currently unlisted, so YouTube reports
        zero videos and zero views for it however many it has really had. These
        are the real figures, counted by hand from Studio on 2 Sep 2026: nine

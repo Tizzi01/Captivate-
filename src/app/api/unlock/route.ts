@@ -14,6 +14,7 @@ import { NextResponse } from "next/server";
 
 import {
   UNLOCK_MAX_AGE_SECONDS,
+  UNLOCK_SCOPES,
   checkPassword,
   isUnlockConfigured,
   isUnlockScope,
@@ -110,5 +111,25 @@ export async function POST(request: Request) {
     // Outlives the tab, so unlocking is something you do once a month.
     maxAge: UNLOCK_MAX_AGE_SECONDS,
   });
+  return response;
+}
+
+/* Locks everything again, both areas at once.
+ *
+ * No password: locking is the safe direction, so there is nothing to protect
+ * here. The worst anyone can do by calling it is lock themselves out. */
+export async function DELETE() {
+  const response = NextResponse.json({ ok: true });
+
+  for (const scope of UNLOCK_SCOPES) {
+    response.cookies.set(unlockCookie(scope), "", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 0,
+    });
+  }
+
   return response;
 }

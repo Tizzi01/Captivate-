@@ -45,6 +45,14 @@ export default async function NetworkPage() {
         name: `Channel ${index + 1}`,
         channelId: "",
         avatarUrl: null,
+        /* Everything else about them goes too. Hiding the name while leaving
+         * the description, the thank you and the exact subscriber count is not
+         * hiding a channel, it is putting a hat on it. */
+        role: undefined,
+        note: "",
+        highlight: undefined,
+        credit: undefined,
+        stats: null,
       }));
 
   const withStats = resolved.filter((channel) => channel.stats !== null);
@@ -71,8 +79,7 @@ export default async function NetworkPage() {
 
         <FadeIn delay={0.1}>
           <p className="mt-4 pl-5 text-muted sm:pl-7">
-            A small network of YouTube channels. Subscriber and view counts come
-            straight from the YouTube Data API and refresh on their own.
+            A small network of YouTube channels.
           </p>
         </FadeIn>
 
@@ -146,26 +153,41 @@ export default async function NetworkPage() {
               <dt className="text-ink">Views</dt>
               <dd className="mt-0.5 text-muted">Across all channels</dd>
               <dd className="mt-3 text-3xl text-ink">
-                {anyStats ? compact(totals.views) : "-"}
+                {anyStats ? `${compact(totals.views)}+` : "-"}
               </dd>
             </div>
             <div>
               <dt className="text-ink">Videos</dt>
               <dd className="mt-0.5 text-muted">Long form, published</dd>
               <dd className="mt-3 text-3xl text-ink">
-                {anyStats ? totals.videos : "-"}
+                {anyStats ? `${totals.videos}+` : "-"}
               </dd>
             </div>
             <div>
               <dt className="text-ink">Channels</dt>
               <dd className="mt-0.5 text-muted">Growing network</dd>
-              <dd className="mt-3 text-3xl text-ink">{channels.length}</dd>
+              <dd className="mt-3 text-3xl text-ink">{channels.length}+</dd>
             </div>
           </dl>
 
-          <p className="mt-8 max-w-md text-sm text-muted">
-            These come straight from the YouTube Data API and refresh on their
-            own, so they are never typed in by hand. {NETWORK_NOTE}
+          <p className="mt-8 flex max-w-md items-start gap-2.5 text-sm text-muted">
+            {/* The same live dot as the header, so the claim and the proof
+                that it is live sit together. */}
+            <span
+              className="relative mt-1.5 flex size-1.5 shrink-0"
+              aria-hidden="true"
+            >
+              {isLive && (
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" />
+              )}
+              <span
+                className={`relative inline-flex size-1.5 rounded-full ${isLive ? "bg-accent" : "bg-muted"}`}
+              />
+            </span>
+            <span>
+              These come straight from the YouTube Data API and refresh on their
+              own, so they are never typed in by hand. {NETWORK_NOTE}
+            </span>
           </p>
         </section>
       </FadeIn>

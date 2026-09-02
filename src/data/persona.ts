@@ -391,6 +391,18 @@ export const CHAT_MODEL = "gemini-3.5-flash-lite";
  *  minute. Clears by itself in a few seconds. */
 export const CHAT_BUSY_MESSAGE = "one sec, im typing too fast lol";
 
+/* Typed into the chat, this locks /scripts and the channel details again.
+ *
+ * Worth knowing: this string is in the page, because the chat runs in the
+ * browser and has to recognise it before deciding not to send it anywhere.
+ * That is fine for what it does. Locking is the safe direction, so the worst
+ * a stranger who finds it can do is lock themselves out of pages they could
+ * not see anyway. It is a shortcut, not a secret.
+ *
+ * It never reaches the model, and it is never logged. */
+export const CHAT_LOCK_CODE = "lockeverything55";
+export const CHAT_LOCK_REPLY = "locked it back up 🔒";
+
 /** Shown when the free DAILY allowance runs out. Keep it light, this is not
  *  an error, and it should not read like the site is broken. */
 export const CHAT_QUOTA_MESSAGE =

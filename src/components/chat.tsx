@@ -34,6 +34,8 @@ import {
   CHAT_AUTO_REPLY,
   CHAT_GREETING,
   CHAT_LIMITS,
+  CHAT_LOCK_CODE,
+  CHAT_LOCK_REPLY,
   CHAT_SUGGESTIONS,
 } from "@/data/persona";
 
@@ -1020,6 +1022,23 @@ export function Chat() {
       if (!content || exhaustedRef.current) return;
 
       setNotice(null);
+
+      /* The lock phrase. Caught here, before anything is sent: it never
+       * reaches the model, is never logged, and costs nothing. The reply is
+       * written locally so the conversation still reads like a conversation. */
+      if (content.trim().toLowerCase() === CHAT_LOCK_CODE) {
+        commit([
+          ...historySnapshot(),
+          { role: "user", content },
+          { role: "assistant", content: CHAT_LOCK_REPLY },
+        ]);
+        try {
+          await fetch("/api/unlock", { method: "DELETE" });
+        } catch {
+          /* offline: the cookies outlive this, and it can be said again */
+        }
+        return;
+      }
 
       /* If a reply is still being paced out, the visitor has talked over it.
        * Dump everything it had left to say as one bubble so nothing is lost,

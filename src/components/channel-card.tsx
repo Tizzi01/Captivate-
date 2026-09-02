@@ -161,7 +161,11 @@ export function ChannelCard({
           </div>
 
           {/* note */}
-          <p className="mt-4 flex-1 text-muted">{channel.note}</p>
+          {channel.note ? (
+            <p className="mt-4 flex-1 text-muted">{channel.note}</p>
+          ) : (
+            <div className="flex-1" />
+          )}
 
           {/* Someone to thank, hanging under the card rather than over it.
             It used to sit inside, across the note, which meant hovering to
