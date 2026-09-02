@@ -13,6 +13,7 @@
 import { NextResponse } from "next/server";
 
 import {
+  UNLOCK_MAX_AGE_SECONDS,
   checkPassword,
   isUnlockConfigured,
   isUnlockScope,
@@ -106,9 +107,8 @@ export async function POST(request: Request) {
     sameSite: "lax", // not sent from other sites
     secure: process.env.NODE_ENV === "production", // https only when deployed
     path: "/",
-    /* No maxAge: a session cookie, gone when the browser closes. It rarely
-     * lives that long anyway, since the middleware spends it on the next page
-     * view, but it means a browser left open overnight is not holding one. */
+    // Outlives the tab, so unlocking is something you do once a month.
+    maxAge: UNLOCK_MAX_AGE_SECONDS,
   });
   return response;
 }

@@ -39,12 +39,18 @@ export function unlockCookie(scope: UnlockScope): string {
   return `captivate_unlock_${scope}`;
 }
 
-/* How long the signed token stays valid.
+/* How long an unlock lasts before the password is asked for again.
  *
- * Short on purpose, and belt to the middleware's braces: the cookie is spent
- * on the page view it unlocks, so this only matters for one that is set and
- * then never used. Two minutes is plenty to get from the form to the page. */
-export const UNLOCK_MAX_AGE_SECONDS = 120;
+ * It used to be two minutes, and to be spent on the first page view, so every
+ * reload asked again. That was asked for and then lived with for a while, and
+ * living with it is what settled it: typing a password to reload your own site
+ * is a tax you pay forever to slow down an attacker who is not there.
+ *
+ * Thirty days, tied to the browser rather than the network. An address is the
+ * wrong thing to trust: home and mobile connections change theirs constantly,
+ * so it would sign you out at random, and carriers put thousands of strangers
+ * behind one address, so it would sign some of them in. */
+export const UNLOCK_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
 /* Trimmed, both of them.
  *
