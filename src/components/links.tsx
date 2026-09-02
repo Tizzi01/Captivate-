@@ -16,8 +16,19 @@ import type { OutboundLink } from "@/data/site";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-function Row({ item, index }: { item: OutboundLink; index: number }) {
-  const [open, setOpen] = useState(false);
+function Row({
+  item,
+  index,
+  open,
+  onOpen,
+  onToggle,
+}: {
+  item: OutboundLink;
+  index: number;
+  open: boolean;
+  onOpen: () => void;
+  onToggle: () => void;
+}) {
   const { play } = useSound();
   const internal = item.href?.startsWith("/") ?? false;
 
@@ -40,12 +51,10 @@ function Row({ item, index }: { item: OutboundLink; index: number }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5, delay: 0.4 + index * 0.06 }}
-      /* The note follows the row, so hovering anywhere on it opens the note.
-         onFocus/onBlur keep it reachable from the keyboard. */
-      onMouseEnter={() => item.note && setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-      onFocus={() => item.note && setOpen(true)}
-      onBlur={() => setOpen(false)}
+      /* Opens on hover anywhere in the row. Closing is the list's job, not
+         this row's: see LinkList. */
+      onMouseEnter={() => item.note && onOpen()}
+      onFocus={() => item.note && onOpen()}
     >
       {item.href ? (
         <a
@@ -68,7 +77,7 @@ function Row({ item, index }: { item: OutboundLink; index: number }) {
           {/* Touch devices have no hover, so the note needs a way in. */}
           <button
             type="button"
-            onClick={() => setOpen((prev) => !prev)}
+            onClick={onToggle}
             aria-expanded={open}
             aria-label={`About ${item.label}`}
             className="text-sm text-muted underline decoration-dotted underline-offset-4 sm:hidden"
@@ -120,10 +129,45 @@ function Row({ item, index }: { item: OutboundLink; index: number }) {
 }
 
 export function LinkList({ items }: { items: OutboundLink[] }) {
+  /* Which notes are open is held here rather than per row, so that crossing
+   * from one row to the next reads as browsing the list rather than flicking
+   * notes open and shut. A note opens when you reach its row and stays open
+   * while you are anywhere in the list; they all close together when you
+   * leave it.
+   *
+   * Keyed by label, which is already unique enough to be the React key. */
+  const [opened, setOpened] = useState<string[]>([]);
+
+  const open = (label: string) =>
+    setOpened((prev) => (prev.includes(label) ? prev : [...prev, label]));
+
+  const toggle = (label: string) =>
+    setOpened((prev) =>
+      prev.includes(label)
+        ? prev.filter((entry) => entry !== label)
+        : [...prev, label],
+    );
+
   return (
-    <ul>
+    <ul
+      onMouseLeave={() => setOpened([])}
+      /* Same rule for the keyboard: only once focus has left the list
+         entirely, not while it moves between rows inside it. */
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setOpened([]);
+        }
+      }}
+    >
       {items.map((item, index) => (
-        <Row key={item.label} item={item} index={index} />
+        <Row
+          key={item.label}
+          item={item}
+          index={index}
+          open={opened.includes(item.label)}
+          onOpen={() => open(item.label)}
+          onToggle={() => toggle(item.label)}
+        />
       ))}
     </ul>
   );
