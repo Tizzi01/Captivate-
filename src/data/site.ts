@@ -74,6 +74,9 @@ export type Segment =
       title: string;
       images: GalleryImage[];
     }
+  /** A phrase that finishes its own sentence on hover. Same treatment as
+   *  the gallery phrase, without the pictures. */
+  | { kind: "aside"; value: string; lead: string }
   /** A nested drop-down inside the extras list. Same motion as "other stuff",
    *  but it carries its own items and owns its own open state. */
   | { kind: "expandable"; value: string; items: Paragraph[] }
@@ -259,6 +262,18 @@ export const otherStuff: Paragraph[] = [
             value: "120 wpm",
             body: "Genuinely one of the most underrated skills to have. Saves a ton of time in the long run.",
           },
+        ],
+        [
+          { kind: "text", value: "I LOVE " },
+          {
+            kind: "aside",
+            value: "drones",
+            /* Opens with the full stop that closes the line, the same way the
+               Japan aside does: the paragraph supplies its own after this, and
+               that one then lands at the end of the whole sentence. */
+            lead: ". I just love things that can fly (and also guns for some reason 💀)",
+          },
+          { kind: "text", value: "." },
         ],
         [
           { kind: "text", value: "The skill I'm most proud of: " },

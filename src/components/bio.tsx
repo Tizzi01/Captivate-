@@ -214,6 +214,74 @@ function SpoilerSegment({
   );
 }
 
+/* ---------------------------------------------------------------- aside -- */
+
+/* A phrase that finishes its own sentence when you hover it.
+ *
+ * The same treatment the trip to Japan uses, minus the pictures: the extra
+ * words are set inline, after the phrase, so they carry on the line rather
+ * than floating over it, and they are not in the page at all until hovered. */
+function AsideSegment({
+  segment,
+}: {
+  segment: Extract<Segment, { kind: "aside" }>;
+}) {
+  const [shown, setShown] = useState(false);
+  const wrapperRef = useRef<HTMLSpanElement>(null);
+  const { play } = useSound();
+
+  // Tapping elsewhere closes it on touch devices, which have no hover.
+  useEffect(() => {
+    if (!shown) return;
+    const onDocPointerDown = (event: PointerEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) setShown(false);
+    };
+    document.addEventListener("pointerdown", onDocPointerDown);
+    return () => document.removeEventListener("pointerdown", onDocPointerDown);
+  }, [shown]);
+
+  const show = () => {
+    if (!shown) play("hover");
+    setShown(true);
+  };
+
+  return (
+    /* The wrapper covers the phrase and the words it reveals, so reading to
+       the end of them does not dismiss them halfway. */
+    <span
+      ref={wrapperRef}
+      onMouseEnter={show}
+      onMouseLeave={() => setShown(false)}
+    >
+      <button
+        type="button"
+        onClick={() => setShown((prev) => !prev)}
+        onFocus={show}
+        aria-expanded={shown}
+        className="group relative cursor-help text-ink transition-colors duration-200 hover:text-accent"
+      >
+        {segment.value}
+        <span className="absolute -bottom-px left-0 h-px w-full origin-left scale-x-0 bg-accent transition-transform duration-300 ease-out group-hover:scale-x-100" />
+        <span className="absolute -bottom-px left-0 h-px w-full bg-line" />
+      </button>
+
+      <AnimatePresence>
+        {shown && (
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="text-muted"
+          >
+            {segment.lead}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </span>
+  );
+}
+
 /* -------------------------------------------------------------- gallery -- */
 
 /** How far each picture tucks under the one above it, in px. */
@@ -541,6 +609,9 @@ export function Segments({
             return <SpoilerSegment key={index} segment={segment} />;
           case "gallery":
             return <GallerySegment key={index} segment={segment} />;
+          case "aside":
+            return <AsideSegment key={index} segment={segment} />;
+
           case "expandable":
             return <ExpandableSegment key={index} segment={segment} />;
 
