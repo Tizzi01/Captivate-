@@ -14,7 +14,14 @@ import { motion } from "motion/react";
 
 import { useSound } from "@/components/sound";
 
-export function UnlockForm({ label = "Unlock" }: { label?: string }) {
+export function UnlockForm({
+  scope,
+  label = "Unlock",
+}: {
+  /** Which area this form unlocks. Each is unlocked separately. */
+  scope: "scripts" | "network";
+  label?: string;
+}) {
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -32,7 +39,7 @@ export function UnlockForm({ label = "Unlock" }: { label?: string }) {
       const response = await fetch("/api/unlock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: value }),
+        body: JSON.stringify({ password: value, scope }),
       });
 
       if (response.ok) {

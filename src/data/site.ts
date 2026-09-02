@@ -38,6 +38,12 @@ export type GalleryImage = {
   src: string;
   alt: string;
   caption?: string;
+  /** Consecutive pictures sharing a group become one figure under one
+   *  caption, so a pair does not repeat the same line twice. */
+  group?: string;
+  /** Draw the caption over the picture, large. Meant for an emoji, not a
+   *  sentence. */
+  overlay?: boolean;
 };
 
 export type Segment =
@@ -209,12 +215,13 @@ export const otherStuff: Paragraph[] = [
         {
           src: "/japan/arcade.jpg",
           alt: "Participants building arcade cabinets at Spacebar Studio",
+          group: "made-it",
           caption: "From the people who made it.",
         },
         {
           src: "/japan/room.png",
           alt: "Someone asleep in a bunk at the venue",
-          caption: "From the people who made it.",
+          group: "made-it",
         },
         {
           src: "/japan/ticket.png",
@@ -225,6 +232,7 @@ export const otherStuff: Paragraph[] = [
           src: "/japan/couldnt-go.png",
           alt: "A list of people who bought a ticket and then could not go",
           caption: "🥀",
+          overlay: true,
         },
         {
           src: "/japan/la-peace.png",

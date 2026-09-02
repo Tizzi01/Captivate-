@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ScriptsPage() {
-  const unlocked = await isUnlocked();
+  const unlocked = await isUnlocked("scripts");
 
   return (
     <main className="mx-auto w-full max-w-[var(--measure)] px-6 pb-24 pt-20 sm:pt-28">
@@ -67,7 +67,7 @@ export default async function ScriptsPage() {
                 This one isn&apos;t public yet. It needs authorised access for
                 now.
               </p>
-              <UnlockForm label="Unlock" />
+              <UnlockForm scope="scripts" label="Unlock" />
             </div>
           </FadeIn>
         )}

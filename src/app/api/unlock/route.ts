@@ -13,11 +13,12 @@
 import { NextResponse } from "next/server";
 
 import {
-  UNLOCK_COOKIE,
   UNLOCK_MAX_AGE_SECONDS,
   checkPassword,
   isUnlockConfigured,
+  isUnlockScope,
   mintToken,
+  unlockCookie,
 } from "@/lib/unlock";
 
 /** Guesses allowed per IP per window, and the window. */
@@ -63,9 +64,20 @@ export async function POST(request: Request) {
   }
 
   let submitted: unknown;
+  let scope: unknown;
   try {
-    submitted = ((await request.json()) as { password?: unknown }).password;
+    const body = (await request.json()) as {
+      password?: unknown;
+      scope?: unknown;
+    };
+    submitted = body.password;
+    scope = body.scope;
   } catch {
+    return NextResponse.json({ error: "Bad request." }, { status: 400 });
+  }
+
+  // Only the areas that exist, so a made-up scope cannot mint a cookie.
+  if (!isUnlockScope(scope)) {
     return NextResponse.json({ error: "Bad request." }, { status: 400 });
   }
 
@@ -74,7 +86,7 @@ export async function POST(request: Request) {
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(UNLOCK_COOKIE, mintToken(), {
+  response.cookies.set(unlockCookie(scope), mintToken(scope), {
     httpOnly: true, // JavaScript in the page cannot read it
     sameSite: "lax", // not sent from other sites
     secure: process.env.NODE_ENV === "production", // https only when deployed

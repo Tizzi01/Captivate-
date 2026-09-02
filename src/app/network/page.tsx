@@ -24,7 +24,7 @@ export default async function NetworkPage() {
   // Server-side. One request covers every channel; the result is cached and
   // revalidated on the interval set in src/data/site.ts.
   const resolved = await getChannelStats(orderedChannels);
-  const unlocked = await isUnlocked();
+  const unlocked = await isUnlocked("network");
 
   /* Locked visitors get the shape of the network, not its identity: the
    * numbers stay, the names, avatars and links do not.
@@ -113,11 +113,11 @@ export default async function NetworkPage() {
           <FadeIn delay={0.3}>
             <div className="mt-6 rounded-lg border border-dashed border-line px-4 py-5 pl-5 sm:pl-7">
               <p className="text-muted">
-                The channels themselves aren&apos;t public yet. They will be before
-                long. Until then the names, logos and links need authorised
-                access.
+                The channels themselves aren&apos;t public yet. They will be
+                before long. Until then the names, logos and links need
+                authorised access.
               </p>
-              <UnlockForm label="Unlock" />
+              <UnlockForm scope="network" label="Unlock" />
             </div>
           </FadeIn>
         )}

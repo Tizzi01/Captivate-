@@ -21,7 +21,23 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 
-export const UNLOCK_COOKIE = "captivate_unlock";
+/* The two locked areas. Each is unlocked on its own: unlocking the scripts
+ * does not quietly unlock the network as well. They share a password, but not
+ * a session, so each one asks. */
+export const UNLOCK_SCOPES = ["scripts", "network"] as const;
+export type UnlockScope = (typeof UNLOCK_SCOPES)[number];
+
+export function isUnlockScope(value: unknown): value is UnlockScope {
+  return (
+    typeof value === "string" &&
+    (UNLOCK_SCOPES as readonly string[]).includes(value)
+  );
+}
+
+/** One cookie per area, so they cannot stand in for each other. */
+export function unlockCookie(scope: UnlockScope): string {
+  return `captivate_unlock_${scope}`;
+}
 
 /** How long one unlock lasts before the password is asked for again. */
 export const UNLOCK_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
@@ -54,27 +70,35 @@ export function checkPassword(input: unknown): boolean {
 }
 
 /** A cookie value that proves the password was given, without containing it.
- *  Carries its own expiry, signed, so neither can be edited by hand. */
-export function mintToken(): string {
+ *  Carries its own expiry AND its area, both signed, so neither can be edited
+ *  by hand and a token for one area cannot be replayed against the other. */
+export function mintToken(scope: UnlockScope): string {
   const expiresAt = String(Date.now() + UNLOCK_MAX_AGE_SECONDS * 1000);
-  return `${expiresAt}.${sign(expiresAt)}`;
+  const payload = `${scope}.${expiresAt}`;
+  return `${payload}.${sign(payload)}`;
 }
 
-export function verifyToken(token: string | undefined): boolean {
+export function verifyToken(
+  scope: UnlockScope,
+  token: string | undefined,
+): boolean {
   if (!isUnlockConfigured() || !token) return false;
 
-  const [expiresAt, mac] = token.split(".");
-  if (!expiresAt || !mac) return false;
+  const [tokenScope, expiresAt, mac] = token.split(".");
+  if (!tokenScope || !expiresAt || !mac) return false;
 
-  // Signature first: an unsigned token is a forgery, whatever it claims.
-  if (!sameBytes(mac, sign(expiresAt))) return false;
+  // The area is inside the signature, so this cannot be swapped for the other.
+  if (tokenScope !== scope) return false;
+
+  // Signature next: an unsigned token is a forgery, whatever it claims.
+  if (!sameBytes(mac, sign(`${tokenScope}.${expiresAt}`))) return false;
 
   const expiry = Number(expiresAt);
   return Number.isFinite(expiry) && expiry > Date.now();
 }
 
 /** The one question every protected page asks. */
-export async function isUnlocked(): Promise<boolean> {
+export async function isUnlocked(scope: UnlockScope): Promise<boolean> {
   const store = await cookies();
-  return verifyToken(store.get(UNLOCK_COOKIE)?.value);
+  return verifyToken(scope, store.get(unlockCookie(scope))?.value);
 }

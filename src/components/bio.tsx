@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { useSound } from "@/components/sound";
-import type { Paragraph, Segment } from "@/data/site";
+import type { GalleryImage, Paragraph, Segment } from "@/data/site";
 
 /* ------------------------------------------------------------ text link -- */
 
@@ -212,6 +212,53 @@ function SpoilerSegment({
 
 /* -------------------------------------------------------------- gallery -- */
 
+/* A small, fixed tilt per picture, so the stack looks laid down by hand rather
+ * than aligned by a machine. Derived from the filename, so a picture always
+ * sits at the same angle instead of jumping about on every render. */
+function tiltFor(src: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < src.length; i++) {
+    hash ^= src.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (((hash >>> 0) % 1000) / 1000) * 2.4 - 1.2;
+}
+
+type ImageGroup = {
+  images: GalleryImage[];
+  caption?: string;
+  overlay?: boolean;
+};
+
+/* Consecutive pictures sharing a group become one figure under one caption, so
+ * a pair does not say the same line twice. Anything ungrouped stands alone. */
+function groupImages(images: GalleryImage[]): ImageGroup[] {
+  const out: ImageGroup[] = [];
+
+  for (const image of images) {
+    const previous = out[out.length - 1];
+    const continues =
+      image.group !== undefined &&
+      previous !== undefined &&
+      previous.images[0]?.group === image.group;
+
+    if (continues) {
+      previous.images.push(image);
+      previous.caption = previous.caption ?? image.caption;
+      previous.overlay = previous.overlay || image.overlay;
+      continue;
+    }
+
+    out.push({
+      images: [image],
+      caption: image.caption,
+      overlay: image.overlay,
+    });
+  }
+
+  return out;
+}
+
 /* Teases on hover, opens a set of pictures on click. Rendered as a dialog so
  * keyboard and screen-reader users get the same thing hover users do. */
 function GallerySegment({
@@ -251,7 +298,9 @@ function GallerySegment({
     setCard(true);
   };
 
-  const visible = segment.images.filter((image) => !broken.includes(image.src));
+  const groups = groupImages(
+    segment.images.filter((image) => !broken.includes(image.src)),
+  );
 
   return (
     <>
@@ -279,7 +328,7 @@ function GallerySegment({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute left-0 top-full z-40 block w-[min(21rem,calc(100vw-3rem))] pt-3"
+              className="absolute left-0 top-full z-40 block w-[min(21rem,calc(100vw-3rem))] pt-3 sm:left-full sm:top-0 sm:w-[21rem] sm:pl-3 sm:pt-0"
             >
               <span className="block rounded-lg border border-line bg-surface p-5 text-left shadow-[0_12px_40px_-12px_rgb(0_0_0/0.18)]">
                 <span className="block text-muted">
@@ -345,36 +394,68 @@ function GallerySegment({
                 </button>
               </div>
 
-              {visible.length === 0 ? (
+              {groups.length === 0 ? (
                 <p className="mt-5 rounded-lg border border-dashed border-line px-4 py-6 text-center text-muted">
                   pictures coming
                 </p>
               ) : (
-                <div className="mt-5 space-y-4">
-                  {visible.map((image) => (
-                    <figure key={image.src}>
-                      {/* Plain img: these are local files of unknown size and
-                          next/image would need each one's dimensions. */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={image.src}
-                        alt={image.alt}
-                        className="w-full rounded-lg border border-line"
-                        loading="lazy"
-                        onError={() =>
-                          setBroken((prev) =>
-                            prev.includes(image.src)
-                              ? prev
-                              : [...prev, image.src],
-                          )
-                        }
-                      />
-                      {image.caption && (
-                        <figcaption className="mt-1.5 text-sm text-muted">
-                          {image.caption}
+                <div className="mt-5 space-y-7">
+                  {groups.map((group, gi) => (
+                    <motion.figure
+                      key={group.images[0].src}
+                      initial={{
+                        opacity: 0,
+                        y: 26,
+                        scale: 0.96,
+                        rotate: tiltFor(group.images[0].src) * 1.8,
+                        filter: "blur(4px)",
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                        scale: 1,
+                        rotate: tiltFor(group.images[0].src),
+                        filter: "blur(0px)",
+                      }}
+                      transition={{
+                        duration: 0.46,
+                        delay: gi * 0.09,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
+                      className="space-y-2 drop-shadow-[0_2px_3px_rgba(20,20,25,0.16)]"
+                    >
+                      {group.images.map((image) => (
+                        <span key={image.src} className="relative block">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={image.src}
+                            alt={image.alt}
+                            className="w-full rounded-lg border border-line"
+                            loading="lazy"
+                            onError={() =>
+                              setBroken((prev) =>
+                                prev.includes(image.src)
+                                  ? prev
+                                  : [...prev, image.src],
+                              )
+                            }
+                          />
+                          {image.overlay && image.caption && (
+                            <span
+                              aria-hidden="true"
+                              className="pointer-events-none absolute inset-0 grid place-items-center text-6xl drop-shadow-[0_6px_16px_rgba(0,0,0,0.5)] sm:text-7xl"
+                            >
+                              {image.caption}
+                            </span>
+                          )}
+                        </span>
+                      ))}
+                      {group.caption && !group.overlay && (
+                        <figcaption className="text-sm text-muted">
+                          {group.caption}
                         </figcaption>
                       )}
-                    </figure>
+                    </motion.figure>
                   ))}
                 </div>
               )}
