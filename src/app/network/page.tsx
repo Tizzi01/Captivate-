@@ -83,40 +83,6 @@ export default async function NetworkPage() {
           </p>
         </FadeIn>
 
-        <FadeIn delay={0.2}>
-          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 pl-5 text-muted sm:pl-7">
-            <span className="inline-flex items-center gap-2">
-              <span className="relative flex size-1.5" aria-hidden="true">
-                {isLive && (
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" />
-                )}
-                <span
-                  className={`relative inline-flex size-1.5 rounded-full ${isLive ? "bg-accent" : "bg-muted"}`}
-                />
-              </span>
-              {isLive
-                ? "Live"
-                : anyStats
-                  ? "Showing saved figures"
-                  : "Live stats offline"}
-            </span>
-
-            {anyStats && (
-              <>
-                <span>
-                  <span className="text-ink">
-                    {compact(totals.subscribers)}
-                  </span>{" "}
-                  subscribers
-                </span>
-                <span>
-                  <span className="text-ink">{compact(totals.views)}</span>{" "}
-                  views
-                </span>
-              </>
-            )}
-          </div>
-        </FadeIn>
         {!unlocked && (
           <FadeIn delay={0.3}>
             <div className="mt-6 rounded-lg border border-dashed border-line px-4 py-5 pl-5 sm:pl-7">
@@ -148,10 +114,10 @@ export default async function NetworkPage() {
        * use, so the summary can never disagree with the grid above it. */}
       <FadeIn delay={0.6}>
         <section className="mt-14 border-t border-line pt-10">
-          <dl className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+          <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
             <div>
               <dt className="text-ink">Views</dt>
-              <dd className="mt-0.5 text-muted">Across all channels</dd>
+              <dd className="mt-0.5 text-muted">Total long form views</dd>
               <dd className="mt-3 text-3xl text-ink">
                 {anyStats ? `${compact(totals.views)}+` : "-"}
               </dd>
@@ -167,6 +133,13 @@ export default async function NetworkPage() {
               <dt className="text-ink">Channels</dt>
               <dd className="mt-0.5 text-muted">Growing network</dd>
               <dd className="mt-3 text-3xl text-ink">{channels.length}+</dd>
+            </div>
+            <div>
+              <dt className="text-ink">Subscribers</dt>
+              <dd className="mt-0.5 text-muted">Across all channels</dd>
+              <dd className="mt-3 text-3xl text-ink">
+                {anyStats ? `${compact(totals.subscribers)}+` : "-"}
+              </dd>
             </div>
           </dl>
 
