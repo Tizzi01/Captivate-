@@ -12,8 +12,6 @@ import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 import { motion } from "motion/react";
 
-import { useSound } from "@/components/sound";
-
 /* A clock that ticks once a second, and only while something is watching it.
  *
  * Through useSyncExternalStore rather than a setInterval in an effect: this is
@@ -31,6 +29,10 @@ function subscribeToNothing(): () => void {
   return () => {};
 }
 
+/* Silent on purpose. Every other control on the site has a sound; this one
+ * does not. A password box that chirps when you touch it is irritating in the
+ * one place people are already slightly on edge, and it plays in front of
+ * whoever is stood behind you. */
 export function UnlockForm({
   scope,
   label = "Unlock",
@@ -45,7 +47,6 @@ export function UnlockForm({
   /** When they may try again, in epoch seconds. Null when they may right now. */
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
   const router = useRouter();
-  const { play } = useSound();
 
   // The clock only runs while there is a countdown to show.
   const now = useSyncExternalStore(
@@ -74,7 +75,6 @@ export function UnlockForm({
       });
 
       if (response.ok) {
-        play("travel");
         setValue("");
         router.refresh();
         return;
@@ -120,7 +120,6 @@ export function UnlockForm({
         <button
           type="submit"
           disabled={busy || lockedOut || value.length === 0}
-          onPointerEnter={() => play("hover")}
           className="shrink-0 rounded-full border border-line px-4 py-2 text-muted transition-colors duration-200 hover:text-ink disabled:opacity-40"
         >
           {busy ? "..." : label}
