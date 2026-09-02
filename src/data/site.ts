@@ -138,7 +138,9 @@ export type Script = {
 
 export const person = {
   name: "Tizzi",
-  greeting: "Hi, I'm Tizzi",
+  /* The page heading. It says what he does rather than hello, so the opening
+     line underneath can get straight on with the detail. */
+  greeting: "Creative Director (YouTube)",
   role: "Creative director",
 };
 
@@ -150,7 +152,6 @@ export const TWITTER_URL: string | null = "https://x.com/tizzi_k";
  *  Deliberately short. The page should say who you are and stop; anything
  *  more is behind something the visitor chooses to open. */
 export const bio: Paragraph[] = [
-  [{ kind: "text", value: "Creative Director (YouTube)" }],
   [
     {
       kind: "text",
