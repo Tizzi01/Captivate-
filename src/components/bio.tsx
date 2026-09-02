@@ -14,6 +14,7 @@ import { AnimatePresence, motion } from "motion/react";
 
 import { useSound } from "@/components/sound";
 import { Slam, composeStack, hashSeed } from "@/components/slam-stack";
+import { useMagnetism } from "@/components/use-magnetism";
 import type { GalleryImage, Paragraph, Segment } from "@/data/site";
 
 /* ------------------------------------------------------------ text link -- */
@@ -213,6 +214,9 @@ function SpoilerSegment({
 
 /* -------------------------------------------------------------- gallery -- */
 
+/** How far each picture tucks under the one above it, in px. */
+const PILE_OVERLAP = 34;
+
 type ImageGroup = {
   images: GalleryImage[];
   caption?: string;
@@ -250,7 +254,11 @@ function groupImages(images: GalleryImage[]): ImageGroup[] {
 
 /* The pile itself, split out so it mounts with the dialog. If the reveal lived
  * in GallerySegment it would fire on page load, and by the time anyone opened
- * the pictures the entrance would be long over. */
+ * the pictures the entrance would be long over.
+ *
+ * This is also the host for the pointer physics: everything inside it leans
+ * toward the cursor, can be dragged around, and springs back when released.
+ * See use-magnetism. */
 function GalleryPictures({
   groups,
   seed,
@@ -260,46 +268,64 @@ function GalleryPictures({
   seed: string;
   onBroken: (src: string) => void;
 }) {
+  const pileRef = useRef<HTMLDivElement>(null);
+  useMagnetism(pileRef);
+
   const stack = composeStack(groups.length, hashSeed(seed));
 
   return (
-    <div className="mt-5 space-y-7">
+    <div ref={pileRef} className="mt-5 flex flex-col">
       {groups.map((group, gi) => (
-        <Slam
+        <div
           key={group.images[0].src}
-          placed={stack[gi]}
-          idx={gi}
-          className="block"
+          /* Each one tucks under the bottom of the one above it, and sits on
+             top of it, so the stack reads as a pile with depth rather than a
+             list with gaps. */
+          style={{
+            marginTop: gi === 0 ? 0 : -PILE_OVERLAP,
+            zIndex: gi + 1,
+            position: "relative",
+          }}
         >
-          <figure className="space-y-2">
-            {group.images.map((image) => (
-              <span key={image.src} className="relative block">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={image.src}
-                  alt={image.alt}
-                  className="w-full rounded-lg border border-line"
-                  loading="lazy"
-                  onError={() => onBroken(image.src)}
-                />
-                {image.overlay && image.caption && (
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 grid place-items-center text-6xl drop-shadow-[0_6px_16px_rgba(0,0,0,0.5)] sm:text-7xl"
-                  >
-                    {image.caption}
-                  </span>
-                )}
-              </span>
-            ))}
+          <Slam placed={stack[gi]} idx={gi} className="block">
+            <figure className="relative">
+              {group.images.map((image, ii) => (
+                <span
+                  key={image.src}
+                  className="relative block"
+                  style={{ marginTop: ii === 0 ? 0 : -PILE_OVERLAP / 2 }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    draggable={false}
+                    className="w-full select-none rounded-lg border border-line bg-surface"
+                    loading="lazy"
+                    onError={() => onBroken(image.src)}
+                  />
+                  {image.overlay && image.caption && (
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 grid place-items-center text-6xl drop-shadow-[0_6px_16px_rgba(0,0,0,0.5)] sm:text-7xl"
+                    >
+                      {image.caption}
+                    </span>
+                  )}
+                </span>
+              ))}
 
-            {group.caption && !group.overlay && (
-              <figcaption className="text-sm leading-normal text-muted">
-                {group.caption}
-              </figcaption>
-            )}
-          </figure>
-        </Slam>
+              {/* Captions sit at the TOP of their picture, not the bottom.
+                  The next picture in the pile overlaps this one's bottom edge,
+                  so a caption down there would be buried by it. */}
+              {group.caption && !group.overlay && (
+                <figcaption className="pointer-events-none absolute left-3 top-3 rounded-md border border-line bg-bg/85 px-2 py-1 text-xs leading-snug text-ink backdrop-blur-sm">
+                  {group.caption}
+                </figcaption>
+              )}
+            </figure>
+          </Slam>
+        </div>
       ))}
     </div>
   );

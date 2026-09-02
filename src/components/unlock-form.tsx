@@ -70,7 +70,10 @@ export function UnlockForm({
           placeholder="password"
           autoComplete="off"
           aria-label="Password"
-          className="chat-input min-w-0 flex-1 rounded-full border border-line bg-surface px-4 py-2 text-ink placeholder:text-muted focus-within:border-ink"
+          /* chat-input suppresses the focus ring, the same exception the
+             composer makes: a hard rectangle drawn around a pill looks broken.
+             The border going solid is the focus indicator instead. */
+          className="chat-input min-w-0 flex-1 rounded-full border border-line bg-surface px-4 py-2 text-ink transition-colors duration-200 placeholder:text-muted focus:border-ink"
         />
         <button
           type="submit"

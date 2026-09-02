@@ -71,6 +71,9 @@ export function hashSeed(value: string): number {
 }
 
 export type Placed = {
+  /** How strongly this one reacts to the pointer, 0 to 1. Varying it stops
+   *  the pile moving as a single sheet. */
+  depth: number;
   /** Resting tilt, degrees. */
   rot: number;
   /** Resting nudge sideways, px. Sideways rather than vertical: these are
@@ -95,6 +98,7 @@ export function composeStack(
     rot: (rnd() * 2 - 1) * jitter.rot,
     dx: (rnd() * 2 - 1) * jitter.dx,
     scale: 1 + (rnd() * 2 - 1) * jitter.scale,
+    depth: 0.35 + rnd() * 0.65,
   }));
 }
 
@@ -111,12 +115,23 @@ export function Slam({
 }) {
   const delay = idx * STAGGER_MS;
 
-  /* Two layers, as in the original. The outer holds the resting offset and
-   * never animates; the inner does the whole entrance. Keeping them apart
-   * means the two never fight over the same transform. */
+  /* Two layers, as in the original, and they must stay two.
+   *
+   * The outer is the pointer's: the lean, the drag and the spring back, driven
+   * every frame by use-magnetism through these four variables. It carries no
+   * transition, because a spring that is also being eased by CSS fights
+   * itself.
+   *
+   * The inner is the entrance's, and it is the one with the transition on it.
+   * Splitting them is what lets a picture be dragged around mid-entrance
+   * without the two animations overwriting each other's transform. */
   const outer: CSSProperties = {
-    transform: `translateX(${placed.dx.toFixed(2)}px)`,
+    transform: `translate(calc(${placed.dx.toFixed(2)}px + var(--px, 0px)), var(--py, 0px)) rotate(var(--pr, 0deg)) scale(var(--ps, 1))`,
     lineHeight: 0,
+    cursor: "grab",
+    // Otherwise the browser scrolls the page instead of letting go of a drag.
+    touchAction: "none",
+    willChange: "transform",
   };
 
   const rest = `translateY(0px) rotate(${placed.rot.toFixed(2)}deg) scale(${placed.scale.toFixed(3)})`;
@@ -176,7 +191,13 @@ export function Slam({
   };
 
   return (
-    <span style={outer} className={className}>
+    <span
+      style={outer}
+      className={`${className} active:cursor-grabbing`}
+      /* How use-magnetism finds them, and how hard each one is pulled. */
+      data-magnet=""
+      data-depth={placed.depth.toFixed(2)}
+    >
       <span ref={innerRef} style={inner}>
         {children}
       </span>

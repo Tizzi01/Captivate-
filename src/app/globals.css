@@ -102,10 +102,16 @@ body {
 }
 
 /* Keyboard focus stays visible; mouse clicks don't draw rings. */
+/* No border-radius here.
+ *
+ * It used to set 2px, to keep the ring from looking sharp on square elements.
+ * But border-radius reshapes the ELEMENT, not the ring, so every rounded thing
+ * turned square the moment it was focused: the pill shaped password field and
+ * the chat composer both squared off on click. Browsers already follow the
+ * element's own radius when drawing an outline, so it was never needed. */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
-  border-radius: 2px;
 }
 
 /* The chat input is an exception: a hard-edged rectangle drawn inside a
