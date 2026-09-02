@@ -8,13 +8,15 @@
  *  owns that open/closed state; everything it renders comes from site.ts.
  * ========================================================================= */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { Segments } from "@/components/bio";
 import type { Paragraph } from "@/data/site";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
+/** How long the list takes to open. Kept next to the value it must outlast. */
+const OPEN_MS = 320;
 
 export function Intro({
   paragraphs,
@@ -25,6 +27,34 @@ export function Intro({
 }) {
   const [open, setOpen] = useState(false);
   const disclosure = { open, onToggle: () => setOpen((prev) => !prev) };
+
+  /* The list has to be clipped while it opens, so it slides out from behind
+   * the line above instead of appearing whole. It then has to STOP being
+   * clipped, because the hover cards inside are absolutely positioned and hang
+   * below the list: anything still clipping cuts them off at the bottom.
+   *
+   * Released on a timer, set straight on the node. Motion's own hooks for this
+   * (transitionEnd, onAnimationComplete) both depend on the animation actually
+   * reporting completion, and it does not always arrive; the card stayed cut
+   * off. A timer does not care. */
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+
+    // Closing: clip again at once, so the list collapses cleanly.
+    if (!open) {
+      el.style.overflow = "hidden";
+      return;
+    }
+
+    el.style.overflow = "hidden";
+    const release = window.setTimeout(() => {
+      el.style.overflow = "visible";
+    }, OPEN_MS + 60);
+    return () => window.clearTimeout(release);
+  }, [open]);
 
   return (
     <div className="space-y-3.5 text-muted">
@@ -43,24 +73,14 @@ export function Intro({
         {open && (
           <motion.div
             key="other-stuff"
-            /* Clipped while it moves, so the list slides out from behind the
-               line above rather than appearing all at once.
- 
-               Then unclipped, via transitionEnd, which Motion applies once the
-               height has finished animating. It has to be released: the hover
-               cards inside are absolutely positioned and hang below the list,
-               so leaving it clipped slices them off at the bottom edge.
- 
-               overflow is not an animatable property, so the hidden set on
-               exit lands immediately, which is what closing wants. */
-            initial={{ height: 0, opacity: 0, overflow: "hidden" }}
-            animate={{
-              height: "auto",
-              opacity: 1,
-              transitionEnd: { overflow: "visible" },
-            }}
-            exit={{ height: 0, opacity: 0, overflow: "hidden" }}
-            transition={{ duration: 0.32, ease: EASE }}
+            ref={boxRef}
+            /* overflow is deliberately absent from all three of these, and
+               from the className: it belongs to the effect above, and Motion
+               must not write over it. */
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: OPEN_MS / 1000, ease: EASE }}
           >
             <ul className="space-y-2.5 border-l border-line pl-4 pt-3.5">
               {extras.map((paragraph, index) => (
