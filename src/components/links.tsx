@@ -29,7 +29,6 @@ function Row({ item, index }: { item: OutboundLink; index: number }) {
           <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left scale-x-0 bg-current transition-transform duration-300 ease-out group-hover:scale-x-100" />
         )}
       </span>
-      <span className="shrink-0 text-muted">{item.description}</span>
     </>
   );
 
@@ -51,7 +50,9 @@ function Row({ item, index }: { item: OutboundLink; index: number }) {
       {item.href ? (
         <a
           href={item.href}
-          {...(internal ? {} : { target: "_blank", rel: "noreferrer noopener" })}
+          {...(internal
+            ? {}
+            : { target: "_blank", rel: "noreferrer noopener" })}
           onPointerEnter={() => play("hover")}
           onClick={() => play("click")}
           className={rowClass}

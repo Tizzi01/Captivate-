@@ -68,7 +68,9 @@ export async function getChannelStats(
     return list.map((channel) => ({
       ...channel,
       stats: channel.fallback ?? null,
-      source: channel.fallback ? ("fallback" as const) : ("unavailable" as const),
+      source: channel.fallback
+        ? ("fallback" as const)
+        : ("unavailable" as const),
       avatarUrl: null,
       subscribersHidden: false,
     }));
@@ -104,7 +106,9 @@ export async function getChannelStats(
       return {
         ...channel,
         stats: channel.fallback ?? null,
-        source: channel.fallback ? ("fallback" as const) : ("unavailable" as const),
+        source: channel.fallback
+          ? ("fallback" as const)
+          : ("unavailable" as const),
         avatarUrl: null,
         subscribersHidden: false,
       };
@@ -128,6 +132,52 @@ export async function getChannelStats(
   });
 }
 
-
 /* Formatting helpers live in src/lib/format.ts so that client
  * components can use them without pulling in this server-only module. */
+
+/* --------------------------------------------------------------- videos -- */
+
+const VIDEOS_ENDPOINT = "https://www.googleapis.com/youtube/v3/videos";
+
+/**
+ * Live view counts for a set of video ids, keyed by id.
+ *
+ * One request covers every video and costs 1 quota unit, the same as the
+ * channels call, so this does not grow with traffic or with the number of
+ * videos on the page.
+ *
+ * Never throws. With no key, a failed request, or an id YouTube does not
+ * recognise, that id is simply absent from the result and the caller falls
+ * back to whatever it has.
+ */
+export async function getVideoViews(
+  ids: string[],
+): Promise<Record<string, number>> {
+  const key = process.env.YOUTUBE_API_KEY;
+  if (!key || ids.length === 0) return {};
+
+  try {
+    const url = new URL(VIDEOS_ENDPOINT);
+    url.searchParams.set("part", "statistics");
+    url.searchParams.set("id", ids.join(","));
+    url.searchParams.set("key", key);
+
+    const response = await fetch(url, {
+      next: { revalidate: STATS_REVALIDATE_SECONDS },
+    });
+    if (!response.ok) return {};
+
+    const data = (await response.json()) as {
+      items?: { id?: string; statistics?: { viewCount?: string } }[];
+    };
+
+    const views: Record<string, number> = {};
+    for (const item of data.items ?? []) {
+      const count = toInt(item.statistics?.viewCount);
+      if (item.id && count > 0) views[item.id] = count;
+    }
+    return views;
+  } catch {
+    return {};
+  }
+}

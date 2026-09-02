@@ -97,7 +97,6 @@ export type Channel = {
 export type OutboundLink = {
   label: string;
   href: string | null;
-  description: string;
   /** Shown on hover or tap. Keep it to a sentence or two. */
   note?: string;
   /** Optional link inside that note. */
@@ -111,8 +110,10 @@ export type Script = {
   title: string;
   /** Any normal YouTube URL; the video id is pulled out of it. */
   youtubeUrl: string;
-  /** Written out as you want it displayed, e.g. "1.2M" or "480K". */
-  views: string;
+  /** Optional aside, shown in brackets after the title. */
+  note?: string;
+  /** Manual view count, only used when the API has none. e.g. "1.2M". */
+  views?: string;
   /** The Google Doc for the script itself. */
   docUrl: string;
 };
@@ -125,9 +126,7 @@ export const person = {
   role: "Creative director",
 };
 
-/** Not set up yet. Put the profile URL here and the editing portfolio note
- *  turns into a real link on its own. */
-export const TWITTER_URL: string | null = null;
+export const TWITTER_URL: string | null = "https://x.com/tizzi_k";
 
 /** The landing-page bio. Each array is one paragraph; each paragraph is a list
  *  of segments so a phrase can carry a link, a reveal, or a disclosure.
@@ -166,12 +165,12 @@ export const bio: Paragraph[] = [
  *  these can carry reveals, spoilers and galleries too. */
 export const otherStuff: Paragraph[] = [
   [
-    { kind: "text", value: "I finished top 13 in a " },
+    { kind: "text", value: "I finished top 30 in a " },
     {
       kind: "reveal",
       value: "game jam",
       title: "The game jam",
-      body: "Hack Club hosted a game jam and I somehow finished in the top 13. The game is still playable, and it's pretty rough around the edges in the way jam games usually are.",
+      body: "Hack Club hosted a game jam and I somehow finished in the top 30. The game is still playable, and it's pretty rough around the edges in the way jam games usually are.",
       href: "https://lovely-torte-2b3aef.netlify.app/tizzis%20final%20game%20tt",
       hrefLabel: "Play the game",
     },
@@ -220,20 +219,18 @@ export const links: OutboundLink[] = [
   {
     label: "Editing portfolio",
     href: "https://sites.google.com/view/tizzi-portfolio/home",
-    description: "Video work",
-    note: "This is pretty outdated. I don't update it much anymore, but newer work occasionally ends up on Twitter.",
-    noteLink: { label: "Twitter", href: TWITTER_URL },
+    note: "This is really outdated. But I post my latest work on",
+    noteLink: { label: "Twitter/X", href: TWITTER_URL },
   },
   {
     label: "Thumbnail portfolio",
     href: "https://dazzling-bonbon-df7594.netlify.app/",
-    description: "Packaging and design",
-    note: "This one's pretty outdated too. I don't really consider myself a thumbnail artist these days.",
+    note: "This one's pretty outdated too. I don't really consider myself a \"thumbnail artist\" these days.",
   },
   {
     label: "Scripts portfolio",
     href: "/scripts",
-    description: "Writing",
+    note: "Not many here. These days I mostly read through and edit other people's scripts rather than writing whole ones from scratch.",
   },
 ];
 
@@ -245,18 +242,34 @@ export const SCRIPTS_INTRO = "A few scripts I've worked on.";
 export const SCRIPTS_NOTE =
   "There aren't many here because these days I mostly read through and edit other people's scripts rather than writing whole ones from scratch.";
 
+/** The second line under the intro: what "editing other people's scripts"
+ *  actually involves, so the short list above does not undersell it. */
+export const SCRIPTS_INVOLVEMENT =
+  "I'm still heavily involved in almost all of them. I review every script properly, and I write nearly all the intros on the videos I produce myself. I'm very picky about intros, for good reason.";
+
 /** Add an entry by adding an object. Nothing else needs touching.
- *  View counts are typed by hand on purpose: nothing scrapes YouTube. */
+ *
+ *  View counts come from the YouTube API at request time, the same key the
+ *  network page uses. `views` here is an optional override for when there is
+ *  no key; leave it out and the count simply goes unshown until there is one. */
 export const scripts: Script[] = [
-  /* TODO(Tizzi): fill these in as you get them. Shape:
   {
-    slug: "some-video",
-    title: "The video title",
-    youtubeUrl: "https://www.youtube.com/watch?v=XXXXXXXXXXX",
-    views: "120K",
-    docUrl: "https://docs.google.com/document/d/.../edit",
+    slug: "child-abuse-anime",
+    title: "The Greatest Depiction of Child Abuse in Anime",
+    youtubeUrl: "https://youtu.be/OXdBvXPF2mQ",
+    note: "scripted the first half",
+    docUrl:
+      "https://docs.google.com/document/d/14ifkEmnqCZVVhKBKJGE9QLPALFreTdAPrJg2T3un3NU/edit?usp=sharing",
   },
-  */
+  {
+    slug: "blox-fruits-money-glitches",
+    title:
+      'ABUSING All "Billion Money" Glitches in BLOX FRUITS! | 1st 2nd and 3rd Sea!',
+    youtubeUrl: "https://youtu.be/u1Yg_ORtdbs",
+    note: "a gaming video, so not much to script. Rough outline and the overall idea of the video",
+    docUrl:
+      "https://docs.google.com/document/d/1JTiAjZV3ebExbtYSqvVDfnkcq05rjdtgOHsV_u0A57Q/edit?usp=sharing",
+  },
 ];
 
 /* -------------------------------------------------------------- channels -- */

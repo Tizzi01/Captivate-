@@ -93,17 +93,38 @@ const RECIPES: Record<SoundName, Note[]> = {
   // A firmer two-part click on activation.
   click: [
     { from: 520, to: 380, duration: 0.07, type: "triangle", gain: 0.9 },
-    { from: 1180, to: 1180, duration: 0.03, type: "sine", gain: 0.35, delay: 0.01 },
+    {
+      from: 1180,
+      to: 1180,
+      duration: 0.03,
+      type: "sine",
+      gain: 0.35,
+      delay: 0.01,
+    },
   ],
   // A gentle rising pair under the light/dark wipe.
   theme: [
     { from: 430, to: 680, duration: 0.2, type: "sine", gain: 0.55 },
-    { from: 860, to: 1360, duration: 0.26, type: "sine", gain: 0.22, delay: 0.05 },
+    {
+      from: 860,
+      to: 1360,
+      duration: 0.26,
+      type: "sine",
+      gain: 0.22,
+      delay: 0.05,
+    },
   ],
   // A rising pair for the trip to the network — "opening a door".
   travel: [
     { from: 320, to: 620, duration: 0.16, type: "sine", gain: 0.8 },
-    { from: 640, to: 1240, duration: 0.2, type: "sine", gain: 0.4, delay: 0.06 },
+    {
+      from: 640,
+      to: 1240,
+      duration: 0.2,
+      type: "sine",
+      gain: 0.4,
+      delay: 0.06,
+    },
   ],
 };
 

@@ -21,10 +21,7 @@ function Stat({
 }) {
   return (
     <div>
-      <div
-        title={title}
-        className="text-lg leading-none text-ink"
-      >
+      <div title={title} className="text-lg leading-none text-ink">
         {value}
       </div>
       <div className="mt-1.5 truncate text-[0.7rem] uppercase tracking-[0.1em] text-muted">
@@ -90,9 +87,7 @@ export function ChannelCard({
               </div>
             )}
             <div>
-              <h3 className="leading-tight text-ink">
-                {channel.name}
-              </h3>
+              <h3 className="leading-tight text-ink">{channel.name}</h3>
               <p className="mt-0.5 text-muted">{channel.role}</p>
             </div>
           </div>
@@ -116,27 +111,29 @@ export function ChannelCard({
           <Stat
             label="Subs"
             value={subscriberValue}
-            title={stats && !channel.subscribersHidden ? exact(stats.subscribers) : undefined}
+            title={
+              stats && !channel.subscribersHidden
+                ? exact(stats.subscribers)
+                : undefined
+            }
           />
           <Stat
             label="Views"
             value={stats ? compact(stats.views) : "-"}
             title={stats ? exact(stats.views) : undefined}
           />
-          <Stat
-            label="Videos"
-            value={stats ? exact(stats.videos) : "-"}
-          />
+          <Stat label="Videos" value={stats ? exact(stats.videos) : "-"} />
         </div>
 
         {/* note */}
-        <p className="mt-4 flex-1 text-muted">
-          {channel.note}
-        </p>
+        <p className="mt-4 flex-1 text-muted">{channel.note}</p>
 
         {channel.highlight && (
           <p className="mt-4 inline-flex w-fit items-center gap-2 rounded-full border border-line px-2.5 py-0.5 text-xs text-muted">
-            <span className="size-1 rounded-full bg-accent" aria-hidden="true" />
+            <span
+              className="size-1 rounded-full bg-accent"
+              aria-hidden="true"
+            />
             {channel.highlight}
           </p>
         )}

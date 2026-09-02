@@ -13,24 +13,16 @@ import { useState } from "react";
 
 import { useSound } from "@/components/sound";
 import type { Script } from "@/data/site";
+import { youtubeId } from "@/lib/youtube-id";
 
-/** Pulls the id out of any normal YouTube URL: watch?v=, youtu.be/, /embed/,
- *  /shorts/. Returns null if it can't, and the entry degrades to a link. */
-export function youtubeId(url: string): string | null {
-  const patterns = [
-    /[?&]v=([\w-]{11})/,
-    /youtu\.be\/([\w-]{11})/,
-    /\/embed\/([\w-]{11})/,
-    /\/shorts\/([\w-]{11})/,
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match?.[1]) return match[1];
-  }
-  return null;
-}
-
-export function ScriptEntry({ script }: { script: Script }) {
+export function ScriptEntry({
+  script,
+  views,
+}: {
+  script: Script;
+  /** Already formatted. null when there is no count to show at all. */
+  views: string | null;
+}) {
   const [playing, setPlaying] = useState(false);
   const { play } = useSound();
   const id = youtubeId(script.youtubeUrl);
@@ -90,9 +82,12 @@ export function ScriptEntry({ script }: { script: Script }) {
         )}
       </div>
 
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="text-ink">{script.title}</h2>
-        <span className="text-muted">{script.views} views</span>
+      <div className="space-y-1">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 className="text-ink">{script.title}</h2>
+          {views && <span className="shrink-0 text-muted">{views} views</span>}
+        </div>
+        {script.note && <p className="text-sm text-muted">({script.note})</p>}
       </div>
 
       <a

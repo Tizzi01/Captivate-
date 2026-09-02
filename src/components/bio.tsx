@@ -30,14 +30,17 @@ function TextLink({
   // newTab forces a real outbound link even for an in-site path — that's how
   // Captivate is linked, so it reads as its own site rather than a subsection.
   const internal = href.startsWith("/") && !newTab;
+  /* Inverted against the rest of the site on purpose: in the intro the prose
+   * is the solid colour and the things you can interact with are the quiet
+   * ones, coming forward only when you point at them. */
   const className =
-    "group relative inline-block text-ink transition-colors duration-200 hover:text-accent";
+    "group relative inline-block text-muted transition-colors duration-200 hover:text-ink";
 
   const inner = (
     <>
       {value}
       {/* Underline grows from the left on hover. */}
-      <span className="absolute -bottom-px left-0 h-px w-full origin-left scale-x-0 bg-accent transition-transform duration-300 ease-out group-hover:scale-x-100" />
+      <span className="absolute -bottom-px left-0 h-px w-full origin-left scale-x-0 bg-current transition-transform duration-300 ease-out group-hover:scale-x-100" />
       <span className="absolute -bottom-px left-0 h-px w-full bg-line" />
     </>
   );
@@ -114,7 +117,7 @@ function RevealSegment({
         onClick={() => setOpen((prev) => !prev)}
         onFocus={show}
         aria-expanded={open}
-        className="cursor-help text-ink underline decoration-accent decoration-dotted decoration-1 underline-offset-4 transition-colors duration-200 hover:text-accent"
+        className="cursor-help text-muted underline decoration-current decoration-dotted decoration-1 underline-offset-4 transition-colors duration-200 hover:text-ink"
       >
         {segment.value}
       </button>
@@ -130,12 +133,8 @@ function RevealSegment({
             className="absolute left-0 top-full z-40 block w-[min(21rem,calc(100vw-3rem))] pt-3"
           >
             <span className="block rounded-lg border border-line bg-surface p-5 text-left shadow-[0_12px_40px_-12px_rgb(0_0_0/0.18)]">
-              <span className="block text-ink">
-                {segment.title}
-              </span>
-              <span className="mt-1.5 block text-muted">
-                {segment.body}
-              </span>
+              <span className="block text-ink">{segment.title}</span>
+              <span className="mt-1.5 block text-muted">{segment.body}</span>
               {segment.href && (
                 <a
                   href={segment.href}
@@ -239,7 +238,7 @@ function GallerySegment({
         }}
         onPointerEnter={() => play("hover")}
         title={segment.teaser}
-        className="group relative text-ink underline decoration-accent decoration-dotted decoration-1 underline-offset-4 transition-colors duration-200 hover:text-accent"
+        className="group relative text-muted underline decoration-current decoration-dotted decoration-1 underline-offset-4 transition-colors duration-200 hover:text-ink"
       >
         {segment.value}
       </button>
@@ -391,7 +390,7 @@ function DisclosureTrigger({
       }}
       onPointerEnter={() => play("hover")}
       aria-expanded={open}
-      className="group relative inline-flex items-center gap-1 text-ink transition-colors duration-200 hover:text-accent"
+      className="group relative inline-flex items-center gap-1 text-muted transition-colors duration-200 hover:text-ink"
     >
       {label}
       <span className="absolute -bottom-px left-0 h-px w-full bg-line" />

@@ -27,7 +27,8 @@ export default async function NetworkPage() {
   const totals = withStats.reduce(
     (acc, channel) => ({
       subscribers:
-        acc.subscribers + (channel.subscribersHidden ? 0 : channel.stats!.subscribers),
+        acc.subscribers +
+        (channel.subscribersHidden ? 0 : channel.stats!.subscribers),
       views: acc.views + channel.stats!.views,
     }),
     { subscribers: 0, views: 0 },
@@ -71,11 +72,14 @@ export default async function NetworkPage() {
             {anyStats && (
               <>
                 <span>
-                  <span className="text-ink">{compact(totals.subscribers)}</span>{" "}
+                  <span className="text-ink">
+                    {compact(totals.subscribers)}
+                  </span>{" "}
                   subscribers
                 </span>
                 <span>
-                  <span className="text-ink">{compact(totals.views)}</span> views
+                  <span className="text-ink">{compact(totals.views)}</span>{" "}
+                  views
                 </span>
               </>
             )}

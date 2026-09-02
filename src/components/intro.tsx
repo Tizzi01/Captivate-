@@ -27,7 +27,7 @@ export function Intro({
   const disclosure = { open, onToggle: () => setOpen((prev) => !prev) };
 
   return (
-    <div className="space-y-3.5 text-muted">
+    <div className="space-y-3.5 text-ink">
       {paragraphs.map((paragraph, index) => (
         <motion.p
           key={index}
@@ -43,13 +43,24 @@ export function Intro({
         {open && (
           <motion.div
             key="other-stuff"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            /* Clipped while it moves, so the list slides out from behind the
+               line above rather than appearing all at once.
+ 
+               Then unclipped, via transitionEnd, which Motion applies once the
+               height has finished animating. It has to be released: the hover
+               cards inside are absolutely positioned and hang below the list,
+               so leaving it clipped slices them off at the bottom edge.
+ 
+               overflow is not an animatable property, so the hidden set on
+               exit lands immediately, which is what closing wants. */
+            initial={{ height: 0, opacity: 0, overflow: "hidden" }}
+            animate={{
+              height: "auto",
+              opacity: 1,
+              transitionEnd: { overflow: "visible" },
+            }}
+            exit={{ height: 0, opacity: 0, overflow: "hidden" }}
             transition={{ duration: 0.32, ease: EASE }}
-            /* Clipped so the list slides out from behind the line above
-               rather than appearing all at once. */
-            className="overflow-hidden"
           >
             <ul className="space-y-2.5 border-l border-line pl-4 pt-3.5">
               {extras.map((paragraph, index) => (
