@@ -165,7 +165,7 @@ export default async function NetworkPage() {
             </span>
             <span>
               These come straight from the YouTube Data API and refresh on their
-              own, so they are never typed in by hand. {NETWORK_NOTE}
+              own. {NETWORK_NOTE}
             </span>
           </p>
         </section>
