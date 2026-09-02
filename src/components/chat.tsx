@@ -254,16 +254,24 @@ function easePageTo(bottomOf: () => number, duration = 700) {
   const t0 = performance.now();
   let cancelled = false;
 
-  /* Any deliberate scroll of their own wins immediately. */
+  /* Any deliberate scroll of their own wins immediately.
+   *
+   * Attached a frame late on purpose: this is kicked off from a send, and the
+   * Enter key that asked for it may still be propagating. Attaching straight
+   * away meant the scroll cancelled itself on the very keystroke that
+   * requested it. */
   const stop = () => {
     cancelled = true;
     for (const e of ["wheel", "touchstart", "keydown"]) {
       window.removeEventListener(e, stop);
     }
   };
-  for (const e of ["wheel", "touchstart", "keydown"]) {
-    window.addEventListener(e, stop, { passive: true, once: true });
-  }
+  requestAnimationFrame(() => {
+    if (cancelled) return;
+    for (const e of ["wheel", "touchstart", "keydown"]) {
+      window.addEventListener(e, stop, { passive: true, once: true });
+    }
+  });
 
   function step(now: number) {
     if (cancelled) return;
@@ -279,6 +287,9 @@ function easePageTo(bottomOf: () => number, duration = 700) {
   }
   requestAnimationFrame(step);
 }
+
+/** Gap left under the composer when the page eases the chat into view. */
+const BREATHING_ROOM = 28;
 
 /** The panel's height once opened, in px. It has exactly two sizes: the
  *  height of the greeting alone, and this. */
@@ -773,6 +784,8 @@ export function Chat() {
    * under the bubble that had just landed. A box that never changes size after
    * the first message cannot do that. */
   const openedRef = useRef(false);
+  /** One page-ease, on the visitor's first message. */
+  const pageEasedRef = useRef(false);
   useEffect(() => {
     if (openedRef.current || messages.length === 0) return;
     const el = scrollRef.current;
@@ -785,18 +798,6 @@ export function Chat() {
     el.style.height = `${el.getBoundingClientRect().height}px`;
     void el.offsetHeight;
     el.style.height = `${PANEL_PX}px`;
-
-    /* Bring the whole thing into view as it opens. The panel's bottom is where
-     * the controls sit, so the margin below it is what keeps the composer off
-     * the bottom edge of the screen. */
-    const BREATHING_ROOM = 28;
-    easePageTo(
-      () =>
-        window.scrollY +
-        el.getBoundingClientRect().top +
-        PANEL_PX +
-        BREATHING_ROOM,
-    );
   }, [messages.length]);
 
   /* Keep the newest message in view, once there is anything to keep in view. */
@@ -842,6 +843,28 @@ export function Chat() {
       ];
       commit(next);
       setPending(true);
+
+      /* Bring the whole chat into view, once, the first time they send
+       * something themselves.
+       *
+       * Deliberately not tied to the panel opening. The chat greets people by
+       * itself when it scrolls into view, which opens the panel while they are
+       * still scrolling the page by hand: easing the page under them there is
+       * hostile, and their scrolling cancelled it anyway, which used up the
+       * one shot before they had typed a word. */
+      if (!pageEasedRef.current) {
+        pageEasedRef.current = true;
+        const panel = scrollRef.current;
+        if (panel) {
+          easePageTo(
+            () =>
+              window.scrollY +
+              panel.getBoundingClientRect().top +
+              PANEL_PX +
+              BREATHING_ROOM,
+          );
+        }
+      }
 
       try {
         const response = await fetch("/api/chat", {
