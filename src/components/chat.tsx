@@ -66,7 +66,6 @@ function TypingDots() {
     <motion.div
       initial={{ opacity: 0, y: 8, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.24, ease: EASE }}
       className="flex justify-start"
       aria-label="typing"
@@ -89,6 +88,19 @@ function TypingDots() {
     </motion.div>
   );
 }
+
+/* The dots deliberately have no exit animation, and are deliberately not
+ * wrapped in AnimatePresence.
+ *
+ * Both would delay their removal past the render that adds the reply, and for
+ * those frames the list holds the dots AND the bubble that replaces them: it
+ * is a row too tall, the view follows it down, and the whole conversation
+ * shifts up. A frame later the dots go and everything drops back. That was the
+ * bubble landing too high with the gap snapping shut under it.
+ *
+ * setPending(false) and the new message are set together, so React commits
+ * them as one render. With nothing to wait for, the swap is a single layout
+ * change and there is no intermediate state to see. */
 
 /* ------------------------------------------------------------- composer -- */
 
@@ -1054,9 +1066,7 @@ export function Chat() {
             <Bubble key={index} message={message} animate />
           ))}
 
-          <AnimatePresence mode="popLayout">
-            {pending && <TypingDots />}
-          </AnimatePresence>
+          {pending && <TypingDots />}
 
           {/* Clears the controls stacked at the bottom, so the newest message
               comes to rest above the glass rather than under it. */}
