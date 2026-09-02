@@ -330,3 +330,122 @@ body {
 .dark .chat-scroll::-webkit-scrollbar-thumb:hover {
   background-color: rgb(255 255 255 / 0.4);
 }
+
+/* ============================================================================
+ *  TILT CARD — a pane of glass that turns to face the pointer.
+ *
+ *  The physics is in tilt-card.tsx; this is only what the numbers it writes
+ *  look like. Technique from Arlan's holo card, with the rainbow foil replaced
+ *  by glass so it sits quietly next to the rest of the page.
+ *
+ *  Three layers over the content, in the order light actually behaves:
+ *    glare  the bright spot where the light lands, following the pointer
+ *    sheen  a soft band sliding across as it turns
+ *    rim    the edge coming toward you catching a highlight
+ *
+ *  None of them use backdrop-filter. That gets stripped out of hand-written
+ *  rules here (see the note by the chat surfaces), and none of these need it:
+ *  they are light ON the glass, not the blur behind it.
+ * ========================================================================= */
+
+.tilt-host {
+  /* The vanishing point. Shallower reads as a bigger, closer object. */
+  perspective: 900px;
+}
+
+.tilt-card {
+  position: relative;
+  height: 100%;
+  border-radius: 0.5rem;
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* No transition on the transform: the spring in tilt-card.tsx is already
+   easing it every frame, and a CSS ease on top would fight it and lag. */
+
+.tilt-glare,
+.tilt-sheen,
+.tilt-rim {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Where the light lands. Follows the pointer on the slower spring, so it
+   arrives a beat after the card has turned. */
+.tilt-glare {
+  background: radial-gradient(
+    circle at var(--gx, 50%) var(--gy, 50%),
+    rgb(255 255 255 / 0.5) 0%,
+    rgb(255 255 255 / 0.14) 26%,
+    transparent 58%
+  );
+  opacity: calc(0.28 + var(--off, 0) * 0.72);
+}
+
+.dark .tilt-glare {
+  background: radial-gradient(
+    circle at var(--gx, 50%) var(--gy, 50%),
+    rgb(255 255 255 / 0.16) 0%,
+    rgb(255 255 255 / 0.05) 26%,
+    transparent 58%
+  );
+}
+
+/* The band that slides across the face as it turns. Narrow and weak on
+   purpose: this is the one that tips from glass into gaudy if overdone. */
+.tilt-sheen {
+  background: linear-gradient(
+    100deg,
+    transparent calc(var(--sheen, 50%) - 26%),
+    rgb(255 255 255 / 0.22) var(--sheen, 50%),
+    transparent calc(var(--sheen, 50%) + 26%)
+  );
+  opacity: calc(var(--off, 0) * 0.9);
+  mix-blend-mode: overlay;
+}
+
+.dark .tilt-sheen {
+  background: linear-gradient(
+    100deg,
+    transparent calc(var(--sheen, 50%) - 26%),
+    rgb(255 255 255 / 0.1) var(--sheen, 50%),
+    transparent calc(var(--sheen, 50%) + 26%)
+  );
+}
+
+/* The edge turned toward you catches the light, the other three do not. Four
+   inset shadows, each weighted by how far that edge has come forward, which is
+   what stops the card reading as a flat rectangle with a gradient on it. */
+.tilt-rim {
+  box-shadow:
+    inset 1px 0 0 rgb(255 255 255 / calc(var(--edge-l, 0) * 0.55)),
+    inset -1px 0 0 rgb(255 255 255 / calc(var(--edge-r, 0) * 0.55)),
+    inset 0 1px 0 rgb(255 255 255 / calc(var(--edge-t, 0) * 0.55)),
+    inset 0 -1px 0 rgb(255 255 255 / calc(var(--edge-b, 0) * 0.55));
+}
+
+.dark .tilt-rim {
+  box-shadow:
+    inset 1px 0 0 rgb(255 255 255 / calc(var(--edge-l, 0) * 0.3)),
+    inset -1px 0 0 rgb(255 255 255 / calc(var(--edge-r, 0) * 0.3)),
+    inset 0 1px 0 rgb(255 255 255 / calc(var(--edge-t, 0) * 0.3)),
+    inset 0 -1px 0 rgb(255 255 255 / calc(var(--edge-b, 0) * 0.3));
+}
+
+/* Anyone who asked for less motion gets a card that simply sits there. The
+   script bails before it ever writes a variable, so this only has to undo the
+   transform the layers would otherwise inherit. */
+@media (prefers-reduced-motion: reduce) {
+  .tilt-card {
+    transform: none;
+  }
+  .tilt-glare,
+  .tilt-sheen,
+  .tilt-rim {
+    display: none;
+  }
+}
