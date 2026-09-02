@@ -2,16 +2,7 @@ import { Chat } from "@/components/chat";
 import { FadeIn } from "@/components/fade-in";
 import { Intro } from "@/components/intro";
 import { LinkList } from "@/components/links";
-import { NetworkInvite } from "@/components/network-invite";
-import {
-  BRAND,
-  CAPTIVATE_URL,
-  bio,
-  channels,
-  links,
-  otherStuff,
-  person,
-} from "@/data/site";
+import { bio, links, otherStuff, person } from "@/data/site";
 
 /* The whole page is one narrow column with a hanging indent: section headings
  * sit at the left margin, their content is indented under them. Column width
@@ -39,19 +30,6 @@ export default function Home() {
 
       <section className="mt-12">
         <FadeIn delay={0.6}>
-          <h2 className="text-ink">Network</h2>
-        </FadeIn>
-        <div className="mt-3 pl-5 sm:pl-7">
-          <NetworkInvite
-            brand={BRAND}
-            channelCount={channels.length}
-            href={CAPTIVATE_URL}
-          />
-        </div>
-      </section>
-
-      <section className="mt-12">
-        <FadeIn delay={0.75}>
           <h2 className="text-ink">Chat</h2>
         </FadeIn>
         <div className="mt-3 pl-5 sm:pl-7">
@@ -59,7 +37,7 @@ export default function Home() {
         </div>
       </section>
 
-      <FadeIn delay={0.9}>
+      <FadeIn delay={0.75}>
         <footer className="mt-20 text-muted">
           <p>
             {person.name} · {new Date().getFullYear()}
