@@ -150,24 +150,27 @@ export const TWITTER_URL: string | null = "https://x.com/tizzi_k";
  *  Deliberately short. The page should say who you are and stop; anything
  *  more is behind something the visitor chooses to open. */
 export const bio: Paragraph[] = [
+  [{ kind: "text", value: "Creative Director (YouTube)" }],
+  [
+    {
+      kind: "text",
+      value: "Go by Tizzi online. I'm 17, living in Toronto. Running ",
+    },
+    /* Captivate stays a link. Since the Network section came off the homepage
+       this is the only way into /network from here. */
+    {
+      kind: "link",
+      value: "Captivate",
+      href: CAPTIVATE_URL,
+      newTab: true,
+    },
+    { kind: "text", value: ", a small network of YouTube channels." },
+  ],
   [
     {
       kind: "text",
       value:
-        "I'm a creative director. I'm 17, and I've been making videos since I was 10.",
-    },
-  ],
-  [
-    { kind: "text", value: "Right now I run the " },
-    {
-      kind: "link",
-      value: "Captivate network",
-      href: CAPTIVATE_URL,
-      newTab: true,
-    },
-    {
-      kind: "text",
-      value: ", a small group of YouTube channels I lead strategy on.",
+        "Started out as a video editor and now I'm obsessed with all things YouTube :) Also heading into my senior year of high school.",
     },
   ],
   [
@@ -263,18 +266,8 @@ export const otherStuff: Paragraph[] = [
             body: "Genuinely one of the most underrated skills to have. Saves a ton of time in the long run.",
           },
         ],
-        [
-          { kind: "text", value: "I LOVE " },
-          {
-            kind: "aside",
-            value: "drones",
-            /* Opens with the full stop that closes the line, the same way the
-               Japan aside does: the paragraph supplies its own after this, and
-               that one then lands at the end of the whole sentence. */
-            lead: ". I just love things that can fly (and also guns for some reason 💀)",
-          },
-          { kind: "text", value: "." },
-        ],
+        [{ kind: "text", value: "I LOVE drones." }],
+        [{ kind: "text", value: "Also into Robotics/tech" }],
         [
           { kind: "text", value: "The skill I'm most proud of: " },
           {
