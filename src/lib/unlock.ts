@@ -46,8 +46,17 @@ export function unlockCookie(scope: UnlockScope): string {
  * then never used. Two minutes is plenty to get from the form to the page. */
 export const UNLOCK_MAX_AGE_SECONDS = 120;
 
-const secret = () => process.env.SITE_UNLOCK_SECRET ?? "";
-const password = () => process.env.SITE_UNLOCK_PASSWORD ?? "";
+/* Trimmed, both of them.
+ *
+ * Pasting a value into a hosting dashboard picks up a trailing newline more
+ * often than not, and an invisible character on the end of the stored password
+ * makes every correct guess fail on a length check with nothing on screen to
+ * explain why. It cost an afternoon once; it will not cost another.
+ *
+ * Nothing is lost by trimming: a password whose first or last character is a
+ * space is a mistake, never a decision. */
+const secret = () => (process.env.SITE_UNLOCK_SECRET ?? "").trim();
+const password = () => (process.env.SITE_UNLOCK_PASSWORD ?? "").trim();
 
 /** False when the env vars are missing, in which case everything stays locked.
  *  Failing closed: a missing password must never mean "let everyone in". */
@@ -69,8 +78,13 @@ function sameBytes(a: string, b: string): boolean {
 
 export function checkPassword(input: unknown): boolean {
   if (!isUnlockConfigured()) return false;
-  if (typeof input !== "string" || input.length === 0) return false;
-  return sameBytes(input, password());
+  if (typeof input !== "string") return false;
+
+  // Trimmed at this end too: phone keyboards like to add a space after a word.
+  const given = input.trim();
+  if (given.length === 0) return false;
+
+  return sameBytes(given, password());
 }
 
 /** A cookie value that proves the password was given, without containing it.
