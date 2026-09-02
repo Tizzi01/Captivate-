@@ -170,7 +170,7 @@ export default async function NetworkPage() {
           <p>
             {BRAND} · {new Date().getFullYear()}
           </p>
-          <BackLink label={`Built by ${person.name}`} />
+          <BackLink label={`Built by ${person.name}`} silent />
         </footer>
       </FadeIn>
     </main>

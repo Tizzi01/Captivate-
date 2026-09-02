@@ -11,18 +11,22 @@ export function BackLink({
   label,
   arrow = false,
   href = "/",
+  silent = false,
 }: {
   label: string;
   arrow?: boolean;
   href?: string;
+  /** No sound. For the credit in the Captivate footer, which is a signature
+   *  rather than a control, and does not want announcing. */
+  silent?: boolean;
 }) {
   const { play } = useSound();
 
   return (
     <Link
       href={href}
-      onPointerEnter={() => play("hover")}
-      onClick={() => play("travel")}
+      onPointerEnter={silent ? undefined : () => play("hover")}
+      onClick={silent ? undefined : () => play("travel")}
       className="group inline-flex items-center gap-1.5 text-muted transition-colors duration-200 hover:text-ink"
     >
       {arrow && (
