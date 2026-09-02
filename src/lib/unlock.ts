@@ -39,8 +39,12 @@ export function unlockCookie(scope: UnlockScope): string {
   return `captivate_unlock_${scope}`;
 }
 
-/** How long one unlock lasts before the password is asked for again. */
-export const UNLOCK_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
+/* How long the signed token stays valid.
+ *
+ * Short on purpose, and belt to the middleware's braces: the cookie is spent
+ * on the page view it unlocks, so this only matters for one that is set and
+ * then never used. Two minutes is plenty to get from the form to the page. */
+export const UNLOCK_MAX_AGE_SECONDS = 120;
 
 const secret = () => process.env.SITE_UNLOCK_SECRET ?? "";
 const password = () => process.env.SITE_UNLOCK_PASSWORD ?? "";

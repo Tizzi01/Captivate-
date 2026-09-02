@@ -19,7 +19,14 @@
  *  Everything about how the bot BEHAVES lives in src/data/persona.ts.
  * ========================================================================= */
 
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 import {
@@ -35,6 +42,73 @@ type Message = { role: "user" | "assistant"; content: string };
 const EASE = [0.22, 1, 0.36, 1] as const;
 /** sessionStorage flag so a refresh in the same tab does not re-greet. */
 const AUTO_GREET_KEY = "captivate:greeted";
+/** Where the conversation is kept so a reload does not wipe it. */
+const HISTORY_KEY = "captivate:chat";
+
+/* ============================================================================
+ *  The conversation, kept across a reload.
+ *
+ *  sessionStorage rather than localStorage on purpose: it belongs to the tab,
+ *  so refreshing keeps the conversation and closing the tab ends it. Nothing
+ *  is left on the machine for the next person who opens the site.
+ *
+ *  Read through useSyncExternalStore rather than restored in an effect. The
+ *  server has no sessionStorage, so it renders an empty conversation; doing
+ *  the restore in an effect would mean rendering the empty one first and
+ *  visibly swapping. getServerSnapshot is exactly the seam for that.
+ * ========================================================================= */
+
+const NO_MESSAGES: Message[] = [];
+
+/** Cached so getSnapshot returns the same array between renders. Handing back
+ *  a fresh one each time makes React re-render forever. */
+let historyCache: Message[] | null = null;
+const historyListeners = new Set<() => void>();
+
+function readHistory(): Message[] {
+  try {
+    const raw = window.sessionStorage.getItem(HISTORY_KEY);
+    if (!raw) return NO_MESSAGES;
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return NO_MESSAGES;
+    // Anything malformed is dropped rather than trusted into the UI.
+    return parsed.filter(
+      (entry): entry is Message =>
+        typeof entry === "object" &&
+        entry !== null &&
+        typeof (entry as Message).content === "string" &&
+        ((entry as Message).role === "user" ||
+          (entry as Message).role === "assistant"),
+    );
+  } catch {
+    return NO_MESSAGES;
+  }
+}
+
+function historySnapshot(): Message[] {
+  if (historyCache === null) historyCache = readHistory();
+  return historyCache;
+}
+
+function historyServerSnapshot(): Message[] {
+  return NO_MESSAGES;
+}
+
+function subscribeToHistory(onChange: () => void): () => void {
+  historyListeners.add(onChange);
+  return () => historyListeners.delete(onChange);
+}
+
+function writeHistory(next: Message[]): void {
+  historyCache = next;
+  try {
+    window.sessionStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+  } catch {
+    /* private mode, or full: the conversation still works, it just will not
+       survive a reload. */
+  }
+  for (const listener of historyListeners) listener();
+}
 
 /* A row of the conversation. `content: null` is the reply that has not landed
  * yet, drawn as the typing dots.
@@ -746,7 +820,11 @@ const Suggestions = memo(function Suggestions({
 /* ----------------------------------------------------------------- chat -- */
 
 export function Chat() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const messages = useSyncExternalStore(
+    subscribeToHistory,
+    historySnapshot,
+    historyServerSnapshot,
+  );
   const [pending, setPending] = useState(false);
   /** A calm one-liner under the chat: rate limit, quota, or a hiccup. */
   const [notice, setNotice] = useState<string | null>(null);
@@ -828,7 +906,6 @@ export function Chat() {
     }, 1050);
   };
   /** Mirrors `messages`, so two sends in one tick both see the latest list. */
-  const messagesRef = useRef<Message[]>([]);
   /** Lets a new send cancel the reply that is still streaming. */
   const abortRef = useRef<AbortController | null>(null);
   /** Stops the scroll-triggered greeting firing more than once per mount. */
@@ -838,8 +915,7 @@ export function Chat() {
   exhaustedRef.current = exhausted;
 
   const commit = useCallback((next: Message[]) => {
-    messagesRef.current = next;
-    setMessages(next);
+    writeHistory(next);
   }, []);
 
   /* Messages of the current reply that have not been shown yet. */
@@ -853,7 +929,7 @@ export function Chat() {
     pendingPartsRef.current = [];
     if (remaining.length === 0) return;
     commit([
-      ...messagesRef.current,
+      ...historySnapshot(),
       { role: "assistant", content: remaining.join(" ") },
     ]);
   }, [commit]);
@@ -871,7 +947,7 @@ export function Chat() {
         if (part === undefined) return; // interrupted and flushed
 
         setPending(false);
-        commit([...messagesRef.current, { role: "assistant", content: part }]);
+        commit([...historySnapshot(), { role: "assistant", content: part }]);
 
         const upcoming = pendingPartsRef.current[0];
         if (upcoming === undefined) return;
@@ -955,10 +1031,7 @@ export function Chat() {
       const controller = new AbortController();
       abortRef.current = controller;
 
-      const next: Message[] = [
-        ...messagesRef.current,
-        { role: "user", content },
-      ];
+      const next: Message[] = [...historySnapshot(), { role: "user", content }];
       commit(next);
       setPending(true);
 
@@ -1061,7 +1134,7 @@ export function Chat() {
     if (exhaustedRef.current) return;
 
     commit([
-      ...messagesRef.current,
+      ...historySnapshot(),
       { role: "user", content: CHAT_AUTO_MESSAGE },
     ]);
 
@@ -1085,6 +1158,14 @@ export function Chat() {
    * daily allowance on people who never type anything. */
   useEffect(() => {
     if (!CHAT_AUTO_MESSAGE || autoGreetedRef.current) return;
+
+    /* A conversation restored from a reload is already under way. Saying hello
+     * into the middle of it would be strange, and it would talk over what is
+     * already on screen. */
+    if (historySnapshot().length > 0) {
+      autoGreetedRef.current = true;
+      return;
+    }
 
     try {
       if (window.sessionStorage.getItem(AUTO_GREET_KEY)) {
