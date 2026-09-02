@@ -13,7 +13,7 @@
  *  no View Transitions support just flip. See the rules in globals.css.
  * ========================================================================= */
 
-import { useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 
 import { useSound } from "@/components/sound";
 
@@ -69,25 +69,47 @@ type ViewTransitionDocument = Document & {
   startViewTransition?: (callback: () => void) => { ready: Promise<void> };
 };
 
+function applyTheme(next: boolean) {
+  document.documentElement.classList.toggle("dark", next);
+  try {
+    window.localStorage.setItem(STORAGE_KEY, next ? "dark" : "light");
+  } catch {
+    /* private mode — the class still applies for this session */
+  }
+}
+
+/* Anything Enter already means something to. Enter is a global shortcut for
+ * the theme here, so it has to stay out of the way of typing a message and of
+ * activating whatever is focused — including this button itself, which would
+ * otherwise flip the theme twice on one keypress. */
+const ENTER_IS_SPOKEN_FOR = [
+  "input",
+  "textarea",
+  "select",
+  "button",
+  "a[href]",
+  "summary",
+  "[contenteditable]",
+  '[role="button"]',
+  '[role="textbox"]',
+].join(",");
+
 export function ThemeToggle() {
   const dark = useSyncExternalStore(subscribe, isDark, isDarkOnServer);
   const { play } = useSound();
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const applyTheme = (next: boolean) => {
-    document.documentElement.classList.toggle("dark", next);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, next ? "dark" : "light");
-    } catch {
-      /* private mode — the class still applies for this session */
-    }
-  };
-
-  const toggle = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const next = !dark;
+  const toggle = useCallback(() => {
+    /* Read the class rather than the rendered value: the keyboard path can
+     * fire between renders, and a stale value flips the theme to where it
+     * already is. */
+    const next = !isDark();
     play("theme");
 
     const doc = document as ViewTransitionDocument;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
 
     // No View Transitions support (or motion turned down): just flip.
     if (!doc.startViewTransition || reduced) {
@@ -95,30 +117,51 @@ export function ThemeToggle() {
       return;
     }
 
-    // The circle grows from the middle of the button. This is the ONLY thing
-    // measured here — element rects are reliable, while reading the viewport
-    // size proved not to be. The end radius is a fixed 150vmax set in
-    // globals.css, which is guaranteed to clear every corner from any origin.
-    const box = event.currentTarget.getBoundingClientRect();
-    const x = box.left + box.width / 2;
-    const y = box.top + box.height / 2;
-
-    // Set before starting: the keyframes in globals.css read these.
+    // The circle grows from the middle of the button, whether the button was
+    // clicked or Enter was pressed somewhere else entirely. This is the ONLY
+    // thing measured here — element rects are reliable, while reading the
+    // viewport size proved not to be. The end radius is a fixed 150vmax set in
+    // globals.css, which clears every corner from any origin.
+    const box = buttonRef.current?.getBoundingClientRect();
     const root = document.documentElement;
-    root.style.setProperty("--wipe-x", `${x}px`);
-    root.style.setProperty("--wipe-y", `${y}px`);
+    if (box) {
+      root.style.setProperty("--wipe-x", `${box.left + box.width / 2}px`);
+      root.style.setProperty("--wipe-y", `${box.top + box.height / 2}px`);
+    }
     root.style.setProperty("--wipe-duration", `${WIPE_MS}ms`);
 
     doc.startViewTransition(() => applyTheme(next));
-  };
+  }, [play]);
+
+  /* Enter anywhere flips the theme.
+   *
+   * Skipped whenever Enter already has a job: typing in the chat, or
+   * activating whatever is focused. With nothing focused the target is the
+   * body, which is the case this is for. */
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" || event.defaultPrevented) return;
+      if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
+        return;
+      }
+      if (event.isComposing) return; // mid IME composition
+      const target = event.target as HTMLElement | null;
+      if (target?.closest(ENTER_IS_SPOKEN_FOR)) return;
+      toggle();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [toggle]);
 
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={toggle}
       onPointerEnter={() => play("hover")}
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-      title={dark ? "Light mode" : "Dark mode"}
+      title={`${dark ? "Light mode" : "Dark mode"} (or press Enter)`}
       className="relative grid size-8 place-items-center rounded-full text-muted transition-colors duration-200 hover:text-ink"
     >
       {/* Both icons are rendered; CSS picks one off the .dark class on <html>.
