@@ -257,3 +257,41 @@ src/
 
 A CMS, accounts/auth/comments, and any analytics beyond Vercel's built-in. Worth
 adding a CMS only if editing `site.ts` ever becomes annoying.
+
+---
+
+## Versions
+
+Every commit gets a version tag, bumped by 0.1 each time, so any past state
+can be referred to by name rather than by a commit hash.
+
+| | |
+| --- | --- |
+| Current | **v0.1** |
+| Next | v0.2, then v0.3 ... after v0.9 comes v1.0 |
+
+To see them all:
+
+```bash
+git tag -n1
+```
+
+To look at an old version without losing anything:
+
+```bash
+git checkout v0.1
+```
+
+That puts the files back as they were at v0.1. To come back to the latest:
+
+```bash
+git checkout main
+```
+
+To actually throw away everything after a version and go back to it for good:
+
+```bash
+git reset --hard v0.1
+```
+
+Only the last one destroys work, and only work that came after that tag.
