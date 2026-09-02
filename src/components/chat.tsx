@@ -271,11 +271,20 @@ function splitIntoMessages(reply: string): string[] {
 }
 
 /** Roughly how long someone would take to type this, in ms. */
-/* Pause between the bubbles of one reply, so it arrives like someone typing
- * rather than all at once. Kept short: this is added on top of however long
- * the model itself took, and a three bubble reply pays it twice. */
+/* Let a bubble finish stretching into place before the next set of dots
+ * appears under it. The morph is a spring and takes about 450ms; starting the
+ * next row on top of it is the stutter you get otherwise. */
+const BUBBLE_SETTLE_MS = 380;
+
+/* How long the dots stay up before the next bubble replaces them.
+ *
+ * The floor matters as much as the ceiling. The dots take 280ms just to
+ * animate in, so anything near that and they are replaced before they have
+ * finished arriving, and the bubble appears to pop in with no typing at all.
+ * This is on top of whatever the model took, and a three bubble reply pays it
+ * twice, so the ceiling stays low. */
 function typingDelay(text: string): number {
-  return Math.min(1100, Math.max(280, text.length * 13));
+  return Math.min(1400, Math.max(700, text.length * 16));
 }
 
 /* ---------------------------------------------------------- suggestions -- */
@@ -820,6 +829,12 @@ export function Chat() {
 
         const upcoming = pendingPartsRef.current[0];
         if (upcoming === undefined) return;
+
+        // Let that bubble land before anything else moves under it.
+        await new Promise((resolve) =>
+          window.setTimeout(resolve, BUBBLE_SETTLE_MS),
+        );
+        if (controller.signal.aborted) return;
 
         // Back to the typing indicator while "writing" the next one.
         setPending(true);
