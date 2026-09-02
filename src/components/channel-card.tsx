@@ -32,6 +32,27 @@ function Stat({
   );
 }
 
+/* Splits a line so one phrase inside it can carry more weight than the rest.
+ *
+ * The emphasis is set in the ink colour rather than made bold, so it darkens in
+ * light mode and lightens in dark rather than being nailed to black. Falls back
+ * to the plain line if the phrase is not in it, so a typo in the data loses the
+ * emphasis and never the sentence. */
+function withEmphasis(text: string, phrase?: string) {
+  if (!phrase) return text;
+
+  const at = text.indexOf(phrase);
+  if (at === -1) return text;
+
+  return (
+    <>
+      {text.slice(0, at)}
+      <span className="text-ink">{phrase}</span>
+      {text.slice(at + phrase.length)}
+    </>
+  );
+}
+
 export function ChannelCard({
   channel,
   index,
@@ -192,7 +213,7 @@ export function ChannelCard({
                 </span>
               </span>
               <span className="text-xs leading-snug text-muted">
-                {channel.credit.text}
+                {withEmphasis(channel.credit.text, channel.credit.emphasis)}
               </span>
             </span>
           )}

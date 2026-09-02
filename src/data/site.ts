@@ -100,8 +100,15 @@ export type Channel = {
   /** Short role line, shown under the name. */
   /** Optional one-liner under the name. */
   role?: string;
-  /** Someone to thank, shown when the card is hovered. */
-  credit?: { name: string; avatar: string; text: string };
+  /** Someone to thank, shown when the card is hovered.
+   *  `emphasis` names a phrase inside `text` to set in the solid colour, for
+   *  the bit that is said with weight. */
+  credit?: {
+    name: string;
+    avatar: string;
+    text: string;
+    emphasis?: string;
+  };
   /** The strategy note — one or two sentences. */
   note: string;
   /** Optional badge, e.g. a standout video result. */
@@ -359,6 +366,7 @@ export const channels: Channel[] = [
       name: "Alserex",
       avatar: "/people/alserex.png",
       text: "Huge shoutout to Alserex, couldn't have done it without him. 10/10 voiceovers, literally THE best person I could have met for this 🍀",
+      emphasis: "THE best",
     },
     flagship: true,
   },
