@@ -176,13 +176,21 @@ export function ChannelCard({
             bottom edge it covers nothing. */}
           {channel.credit && (
             <span className="pointer-events-none absolute left-0 right-0 top-full z-20 mt-2 flex translate-y-1 items-start gap-2.5 rounded-lg border border-line bg-surface/95 p-3 opacity-0 shadow-[0_12px_34px_-12px_rgb(0_0_0/0.4)] backdrop-blur-sm transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={channel.credit.avatar}
-                alt=""
-                className="size-9 shrink-0 rounded-full border border-line object-cover"
-                loading="lazy"
-              />
+              {/* The face and the name together, so it is obvious whose face
+                  it is. An arrow pointing at it would need explaining; a name
+                  under a photograph does not. */}
+              <span className="flex shrink-0 flex-col items-center gap-1">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={channel.credit.avatar}
+                  alt=""
+                  className="size-9 rounded-full border border-line object-cover"
+                  loading="lazy"
+                />
+                <span className="text-[0.65rem] leading-none text-muted">
+                  {channel.credit.name}
+                </span>
+              </span>
               <span className="text-xs leading-snug text-muted">
                 {channel.credit.text}
               </span>
