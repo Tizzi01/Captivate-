@@ -93,10 +93,11 @@ const mix = (v: number, a: number, b: number) => a + ((b - a) * (v + 1)) / 2;
 export function TiltCard({
   children,
   className = "",
+  ...rest
 }: {
   children: ReactNode;
   className?: string;
-}) {
+} & Record<`data-${string}`, string | undefined>) {
   const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -240,7 +241,7 @@ export function TiltCard({
   }, []);
 
   return (
-    <div ref={hostRef} className={`tilt-host ${className}`}>
+    <div ref={hostRef} className={`tilt-host ${className}`} {...rest}>
       <div className="tilt-card">
         {children}
         {/* The surface, over the content: one highlight where the light lands,

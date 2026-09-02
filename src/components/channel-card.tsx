@@ -67,7 +67,10 @@ export function ChannelCard({
         ease: [0.22, 1, 0.36, 1],
       }}
     >
-      <TiltCard className="h-full">
+      <TiltCard
+        className="h-full"
+        data-credit={channel.credit ? "" : undefined}
+      >
         <Wrapper
           {...(locked
             ? {}

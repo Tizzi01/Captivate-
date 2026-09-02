@@ -97,7 +97,7 @@ export default async function NetworkPage() {
         )}
       </header>
 
-      <section className="mt-10 grid gap-4 sm:mt-14 sm:grid-cols-2">
+      <section className="channel-grid mt-10 grid gap-4 sm:mt-14 sm:grid-cols-2">
         {channels.map((channel, index) => (
           <ChannelCard
             key={channel.slug}
@@ -107,6 +107,12 @@ export default async function NetworkPage() {
           />
         ))}
       </section>
+
+      {/* Room for the credit that hangs under a card, opened only while that
+          card is hovered. See globals.css: everything below slides down to make
+          way and slides back after, rather than a permanent gap sitting there
+          for a thank you nobody is currently reading. */}
+      <div className="credit-room" aria-hidden="true" />
 
       {/* The network at a glance, under the cards.
        *
@@ -124,7 +130,7 @@ export default async function NetworkPage() {
             </div>
             <div>
               <dt className="text-ink">Videos</dt>
-              <dd className="mt-0.5 text-muted">Long form, published</dd>
+              <dd className="mt-0.5 text-muted">Across all channels</dd>
               <dd className="mt-3 text-3xl text-ink">
                 {anyStats ? `${totals.videos}+` : "-"}
               </dd>

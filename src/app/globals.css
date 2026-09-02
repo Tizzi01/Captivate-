@@ -473,3 +473,36 @@ body {
     display: none;
   }
 }
+
+/* ============================================================================
+ *  CREDIT ROOM — space that opens for the thank you under a channel card.
+ *
+ *  The credit hangs below its card, and without this it lands on top of the
+ *  summary underneath. The obvious fix is a permanent gap, but that leaves a
+ *  hole in the page for something almost nobody is looking at.
+ *
+ *  So the room is made only while it is needed: hovering a card that has a
+ *  credit opens this strip, everything below eases down, and it closes again
+ *  on the way out.
+ *
+ *  :has() is what makes it possible to do in CSS. The strip is a sibling of the
+ *  grid, so it can ask "is a card with a credit being hovered in there?"
+ *  without any of it going through React.
+ * ========================================================================= */
+
+.credit-room {
+  height: 0;
+  transition: height 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Focus counts too, so tabbing to the card opens it the same way. */
+.channel-grid:has([data-credit]:hover) ~ .credit-room,
+.channel-grid:has([data-credit]:focus-within) ~ .credit-room {
+  height: 4.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .credit-room {
+    transition: none;
+  }
+}
