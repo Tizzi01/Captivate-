@@ -11,9 +11,6 @@ import {
   person,
   scripts,
 } from "@/data/site";
-import { compact } from "@/lib/format";
-import { youtubeId } from "@/lib/youtube-id";
-import { getVideoViews } from "@/lib/youtube";
 
 /* Same column, type and spacing as the homepage. Text first, one video per
  * entry, nothing that looks like a portfolio grid. */
@@ -23,15 +20,7 @@ export const metadata: Metadata = {
   description: `Scripts ${person.name} has worked on.`,
 };
 
-export default async function ScriptsPage() {
-  /* One request covers every video on the page. It comes back empty when there
-   * is no API key, in which case each entry falls back to its own `views`, and
-   * simply shows no count if it has none. */
-  const ids = scripts
-    .map((script) => youtubeId(script.youtubeUrl))
-    .filter((id): id is string => id !== null);
-  const liveViews = await getVideoViews(ids);
-
+export default function ScriptsPage() {
   return (
     <main className="mx-auto w-full max-w-[var(--measure)] px-6 pb-24 pt-20 sm:pt-28">
       <FadeIn y={8}>
@@ -69,22 +58,11 @@ export default async function ScriptsPage() {
           </FadeIn>
         ) : (
           <div className="space-y-12">
-            {scripts.map((script, index) => {
-              const id = youtubeId(script.youtubeUrl);
-              const live = id === null ? undefined : liveViews[id];
-              return (
-                <FadeIn key={script.slug} delay={0.28 + index * 0.08}>
-                  <ScriptEntry
-                    script={script}
-                    views={
-                      live !== undefined
-                        ? compact(live)
-                        : (script.views ?? null)
-                    }
-                  />
-                </FadeIn>
-              );
-            })}
+            {scripts.map((script, index) => (
+              <FadeIn key={script.slug} delay={0.28 + index * 0.08}>
+                <ScriptEntry script={script} />
+              </FadeIn>
+            ))}
           </div>
         )}
       </section>

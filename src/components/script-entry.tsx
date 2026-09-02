@@ -15,15 +15,14 @@ import { useSound } from "@/components/sound";
 import type { Script } from "@/data/site";
 import { youtubeId } from "@/lib/youtube-id";
 
-export function ScriptEntry({
-  script,
-  views,
-}: {
-  script: Script;
-  /** Already formatted. null when there is no count to show at all. */
-  views: string | null;
-}) {
+export function ScriptEntry({ script }: { script: Script }) {
   const [playing, setPlaying] = useState(false);
+  /* maxresdefault is the only still YouTube stores at full 16:9 720p. The
+   * hqdefault one is 480x360, so filling a widescreen frame with it both
+   * upscales and crops: that is the blur. Not every video has a maxres, and
+   * for those YouTube serves a tiny placeholder rather than a 404, so fall
+   * back on error. */
+  const [fullRes, setFullRes] = useState(true);
   const { play } = useSound();
   const id = youtubeId(script.youtubeUrl);
 
@@ -61,7 +60,8 @@ export function ScriptEntry({
             {/* Plain img: YouTube's still, straight from their CDN. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
+              src={`https://i.ytimg.com/vi/${id}/${fullRes ? "maxresdefault" : "hqdefault"}.jpg`}
+              onError={() => setFullRes(false)}
               alt=""
               className="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
               loading="lazy"
@@ -85,7 +85,7 @@ export function ScriptEntry({
       <div className="space-y-1">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h2 className="text-ink">{script.title}</h2>
-          {views && <span className="shrink-0 text-muted">{views} views</span>}
+          <span className="shrink-0 text-muted">{script.views} views</span>
         </div>
         {script.note && <p className="text-sm text-muted">({script.note})</p>}
       </div>

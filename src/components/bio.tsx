@@ -30,17 +30,14 @@ function TextLink({
   // newTab forces a real outbound link even for an in-site path — that's how
   // Captivate is linked, so it reads as its own site rather than a subsection.
   const internal = href.startsWith("/") && !newTab;
-  /* Inverted against the rest of the site on purpose: in the intro the prose
-   * is the solid colour and the things you can interact with are the quiet
-   * ones, coming forward only when you point at them. */
   const className =
-    "group relative inline-block text-muted transition-colors duration-200 hover:text-ink";
+    "group relative inline-block text-ink transition-colors duration-200 hover:text-accent";
 
   const inner = (
     <>
       {value}
       {/* Underline grows from the left on hover. */}
-      <span className="absolute -bottom-px left-0 h-px w-full origin-left scale-x-0 bg-current transition-transform duration-300 ease-out group-hover:scale-x-100" />
+      <span className="absolute -bottom-px left-0 h-px w-full origin-left scale-x-0 bg-accent transition-transform duration-300 ease-out group-hover:scale-x-100" />
       <span className="absolute -bottom-px left-0 h-px w-full bg-line" />
     </>
   );
@@ -117,7 +114,7 @@ function RevealSegment({
         onClick={() => setOpen((prev) => !prev)}
         onFocus={show}
         aria-expanded={open}
-        className="cursor-help text-muted underline decoration-current decoration-dotted decoration-1 underline-offset-4 transition-colors duration-200 hover:text-ink"
+        className="cursor-help text-ink underline decoration-accent decoration-dotted decoration-1 underline-offset-4 transition-colors duration-200 hover:text-accent"
       >
         {segment.value}
       </button>
@@ -238,7 +235,7 @@ function GallerySegment({
         }}
         onPointerEnter={() => play("hover")}
         title={segment.teaser}
-        className="group relative text-muted underline decoration-current decoration-dotted decoration-1 underline-offset-4 transition-colors duration-200 hover:text-ink"
+        className="group relative text-ink underline decoration-accent decoration-dotted decoration-1 underline-offset-4 transition-colors duration-200 hover:text-accent"
       >
         {segment.value}
       </button>
@@ -390,7 +387,7 @@ function DisclosureTrigger({
       }}
       onPointerEnter={() => play("hover")}
       aria-expanded={open}
-      className="group relative inline-flex items-center gap-1 text-muted transition-colors duration-200 hover:text-ink"
+      className="group relative inline-flex items-center gap-1 text-ink transition-colors duration-200 hover:text-accent"
     >
       {label}
       <span className="absolute -bottom-px left-0 h-px w-full bg-line" />

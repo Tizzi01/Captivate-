@@ -403,6 +403,9 @@ function easeListToBottom(el: HTMLElement, duration = 340): () => void {
   return stop;
 }
 
+/** Gap left under the composer when the page eases the chat into view. */
+const BREATHING_ROOM = 28;
+
 /** The panel's height once opened, in px. It has exactly two sizes: the
  *  height of the greeting alone, and this. */
 const PANEL_PX = 384;
@@ -962,10 +965,8 @@ export function Chat() {
       commit(next);
       setPending(true);
 
-      /* Ease the page to the bottom, once, the first time they send
-       * something themselves. All the way down rather than just far enough to
-       * clear the composer: the chat is the last thing on the page, so the
-       * bottom is where it wants to sit.
+      /* Bring the whole chat into view, once, the first time they send
+       * something themselves.
        *
        * Deliberately not tied to the panel opening. The chat greets people by
        * itself when it scrolls into view, which opens the panel while they are
@@ -974,7 +975,16 @@ export function Chat() {
        * one shot before they had typed a word. */
       if (!pageEasedRef.current) {
         pageEasedRef.current = true;
-        easePageTo(() => document.documentElement.scrollHeight);
+        const panel = scrollRef.current;
+        if (panel) {
+          easePageTo(
+            () =>
+              window.scrollY +
+              panel.getBoundingClientRect().top +
+              PANEL_PX +
+              BREATHING_ROOM,
+          );
+        }
       }
 
       try {

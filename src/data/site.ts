@@ -112,8 +112,8 @@ export type Script = {
   youtubeUrl: string;
   /** Optional aside, shown in brackets after the title. */
   note?: string;
-  /** Manual view count, only used when the API has none. e.g. "1.2M". */
-  views?: string;
+  /** Written out as you want it displayed, e.g. "380K+". */
+  views: string;
   /** The Google Doc for the script itself. */
   docUrl: string;
 };
@@ -230,7 +230,7 @@ export const links: OutboundLink[] = [
   {
     label: "Scripts portfolio",
     href: "/scripts",
-    note: "Not many here. These days I mostly read through and edit other people's scripts rather than writing whole ones from scratch.",
+    note: "Mostly read through and edit scripts instead of writing from scratch.",
   },
 ];
 
@@ -240,23 +240,22 @@ export const links: OutboundLink[] = [
 export const SCRIPTS_INTRO = "A few scripts I've worked on.";
 
 export const SCRIPTS_NOTE =
-  "There aren't many here because these days I mostly read through and edit other people's scripts rather than writing whole ones from scratch.";
+  "There aren't many here because these days I mostly read through and edit scripts rather than writing whole ones from scratch.";
 
 /** The second line under the intro: what "editing other people's scripts"
  *  actually involves, so the short list above does not undersell it. */
 export const SCRIPTS_INVOLVEMENT =
-  "I'm still heavily involved in almost all of them. I review every script properly, and I write nearly all the intros on the videos I produce myself. I'm very picky about intros, for good reason.";
+  "I'm still heavily involved in almost all of them. I write almost all of the intros (for the videos I produce) myself, cause I'm extremely picky when it comes to that.";
 
 /** Add an entry by adding an object. Nothing else needs touching.
  *
- *  View counts come from the YouTube API at request time, the same key the
- *  network page uses. `views` here is an optional override for when there is
- *  no key; leave it out and the count simply goes unshown until there is one. */
+ *  View counts are typed by hand on purpose: nothing here calls YouTube. */
 export const scripts: Script[] = [
   {
     slug: "child-abuse-anime",
     title: "The Greatest Depiction of Child Abuse in Anime",
     youtubeUrl: "https://youtu.be/OXdBvXPF2mQ",
+    views: "380K+",
     note: "scripted the first half",
     docUrl:
       "https://docs.google.com/document/d/14ifkEmnqCZVVhKBKJGE9QLPALFreTdAPrJg2T3un3NU/edit?usp=sharing",
@@ -266,6 +265,7 @@ export const scripts: Script[] = [
     title:
       'ABUSING All "Billion Money" Glitches in BLOX FRUITS! | 1st 2nd and 3rd Sea!',
     youtubeUrl: "https://youtu.be/u1Yg_ORtdbs",
+    views: "185K+",
     note: "a gaming video, so not much to script. Rough outline and the overall idea of the video",
     docUrl:
       "https://docs.google.com/document/d/1JTiAjZV3ebExbtYSqvVDfnkcq05rjdtgOHsV_u0A57Q/edit?usp=sharing",

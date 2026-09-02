@@ -27,7 +27,7 @@ export function Intro({
   const disclosure = { open, onToggle: () => setOpen((prev) => !prev) };
 
   return (
-    <div className="space-y-3.5 text-ink">
+    <div className="space-y-3.5 text-muted">
       {paragraphs.map((paragraph, index) => (
         <motion.p
           key={index}
