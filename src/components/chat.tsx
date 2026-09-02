@@ -91,7 +91,10 @@ function Bubble({
     >
       <motion.span
         layout={live}
-        transition={{ duration: 0.34, ease: EASE }}
+        /* A spring, not a duration. The bubble is changing size, and an eased
+         * duration starts abruptly and stops dead; a near critically damped
+         * spring accelerates and settles instead, with no bounce at the end. */
+        transition={{ type: "spring", stiffness: 260, damping: 30, mass: 0.9 }}
         className={`max-w-[60%] rounded-[20px] px-4 py-2 text-base leading-6 ${
           mine
             ? "bg-chat-blue text-white"
@@ -112,7 +115,7 @@ function Bubble({
                exactly the moment the dots turn into text. */
             initial={live && animate ? { opacity: 0 } : false}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.2, ease: EASE, delay: 0.06 }}
+            transition={{ duration: 0.3, ease: EASE, delay: 0.08 }}
             className="block"
           >
             {message.content}
@@ -225,6 +228,11 @@ const Composer = memo(function Composer({
  *     own bubble), so very short fragments get folded into their neighbour
  *   - more than MAX_BUBBLES is a wall of bubbles, so the tail gets merged
  */
+/* How long to wait out a per-minute rate limit before trying again. Google's
+ * window is a minute, but the allowance frees up continuously within it, so a
+ * few seconds is normally enough. */
+const MINUTE_LIMIT_RETRY_MS = 4000;
+
 const MAX_BUBBLES = 3;
 /** Anything shorter than this isn't really its own message. */
 const MIN_BUBBLE_CHARS = 18;
@@ -263,8 +271,11 @@ function splitIntoMessages(reply: string): string[] {
 }
 
 /** Roughly how long someone would take to type this, in ms. */
+/* Pause between the bubbles of one reply, so it arrives like someone typing
+ * rather than all at once. Kept short: this is added on top of however long
+ * the model itself took, and a three bubble reply pays it twice. */
 function typingDelay(text: string): number {
-  return Math.min(2200, Math.max(600, text.length * 28));
+  return Math.min(1100, Math.max(280, text.length * 13));
 }
 
 /* ---------------------------------------------------------- suggestions -- */
@@ -913,15 +924,33 @@ export function Chat() {
       }
 
       try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: next,
-            sessionId: sessionIdRef.current,
-          }),
-          signal: controller.signal,
-        });
+        const ask = () =>
+          fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              messages: next,
+              sessionId: sessionIdRef.current,
+            }),
+            signal: controller.signal,
+          });
+
+        let response = await ask();
+
+        /* Google caps requests per minute as well as per day. The per-minute
+         * cap clears in seconds, so wait it out once and ask again rather than
+         * telling someone the chat is busy over something that fixes itself.
+         * The typing dots stay up throughout, so it reads as thinking. */
+        if (
+          response.status === 429 &&
+          response.headers.get("X-Chat-Limit") !== "day"
+        ) {
+          await new Promise((resolve) =>
+            window.setTimeout(resolve, MINUTE_LIMIT_RETRY_MS),
+          );
+          if (controller.signal.aborted) return;
+          response = await ask();
+        }
 
         if (!response.ok || !response.body) {
           const body = (await response.text()) || "that didn't send";

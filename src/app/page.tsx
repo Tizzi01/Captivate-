@@ -2,7 +2,7 @@ import { Chat } from "@/components/chat";
 import { FadeIn } from "@/components/fade-in";
 import { Intro } from "@/components/intro";
 import { LinkList } from "@/components/links";
-import { bio, links, otherStuff, person } from "@/data/site";
+import { DISCORD_URL, bio, links, otherStuff, person } from "@/data/site";
 
 /* The whole page is one narrow column with a hanging indent: section headings
  * sit at the left margin, their content is indented under them. Column width
@@ -40,7 +40,15 @@ export default function Home() {
       <FadeIn delay={0.75}>
         <footer className="mt-20 text-muted">
           <p>
-            {person.name} · {new Date().getFullYear()}
+            {person.name} · {new Date().getFullYear()} ·{" "}
+            <a
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline decoration-line underline-offset-4 transition-colors duration-200 hover:text-ink hover:decoration-current"
+            >
+              Discord
+            </a>
           </p>
         </footer>
       </FadeIn>

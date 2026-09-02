@@ -3,7 +3,13 @@ import type { Metadata } from "next";
 import { BackLink } from "@/components/back-link";
 import { FadeIn } from "@/components/fade-in";
 import { ScriptEntry } from "@/components/script-entry";
-import { SCRIPTS_INTRO, SCRIPTS_NOTE, person, scripts } from "@/data/site";
+import {
+  DISCORD_URL,
+  SCRIPTS_INTRO,
+  SCRIPTS_NOTE,
+  person,
+  scripts,
+} from "@/data/site";
 
 /* Same column, type and spacing as the homepage. Text first, one video per
  * entry, nothing that looks like a portfolio grid. */
@@ -57,7 +63,15 @@ export default function ScriptsPage() {
       <FadeIn delay={0.5}>
         <footer className="mt-20 text-muted">
           <p>
-            {person.name} · {new Date().getFullYear()}
+            {person.name} · {new Date().getFullYear()} ·{" "}
+            <a
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline decoration-line underline-offset-4 transition-colors duration-200 hover:text-ink hover:decoration-current"
+            >
+              Discord
+            </a>
           </p>
         </footer>
       </FadeIn>

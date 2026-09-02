@@ -24,6 +24,9 @@ export const FONT: "lexend" | "arial" = "lexend";
  *  a new tab — no other file needs to change. */
 export const CAPTIVATE_URL = "/network";
 
+/** The one contact given out anywhere on the site. Shown in the footer. */
+export const DISCORD_URL = "https://discord.com/users/964523481666560061";
+
 export const STATS_REVALIDATE_SECONDS = 300;
 
 /* ----------------------------------------------------------------- types -- */
