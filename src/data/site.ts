@@ -62,17 +62,15 @@ export type Segment =
     }
   /** Hidden until clicked. For things that are better as a small surprise. */
   | { kind: "spoiler"; value: string; reveal: string }
-  /** A hover card whose text contains its own link into a set of pictures.
-   *  The card reads as a sentence, and one phrase in it opens the gallery:
-   *  `lead` + `trigger` + `tail`. */
+  /** A phrase that carries a set of pictures. Hovering it continues the
+   *  sentence with `lead`; clicking it opens the pictures. */
   | {
       kind: "gallery";
       value: string;
       /** Shown on hover, to tease rather than explain. */
       teaser: string;
+      /** The rest of the sentence, revealed beside the phrase on hover. */
       lead: string;
-      trigger: string;
-      tail?: string;
       title: string;
       images: GalleryImage[];
     }
@@ -203,8 +201,7 @@ export const otherStuff: Paragraph[] = [
       /* Opens with the full stop that closes "trip to Japan", because the
          paragraph supplies its own after this segment and that one then lands
          at the very end of the sentence. */
-      lead: ". 🥹 Wasn't able to go due to visa complications. But here's ",
-      trigger: "the next best thing",
+      lead: ". 🥹 Wasn't able to go due to visa complications",
       /* The files these point at live in public/japan. Anything that fails to
          load is dropped from the gallery rather than showing a broken frame,
          so a missing file is invisible rather than embarrassing. */

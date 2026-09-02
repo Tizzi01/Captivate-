@@ -391,9 +391,16 @@ function GallerySegment({
       >
         <button
           type="button"
-          onClick={() => setCard((prev) => !prev)}
+          /* The phrase is the way in now. Hovering it finishes the
+             sentence, clicking it opens the pictures. There used to be a
+             second link buried in the revealed text doing the opening, which
+             meant reading a line before you could find the thing to click. */
+          onClick={() => {
+            play("click");
+            setOpen(true);
+          }}
           onFocus={showCard}
-          aria-expanded={card}
+          aria-haspopup="dialog"
           title={segment.teaser}
           className="cursor-help group relative text-ink transition-colors duration-200 hover:text-accent"
         >
@@ -426,24 +433,7 @@ function GallerySegment({
                  clicked by accident. */
               className="text-muted"
             >
-              <span>
-                <span className="text-muted">
-                  {segment.lead}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      play("click");
-                      setOpen(true);
-                    }}
-                    className="group relative text-ink transition-colors duration-200 hover:text-accent"
-                  >
-                    {segment.trigger}
-                    <span className="absolute -bottom-px left-0 h-px w-full origin-left scale-x-0 bg-accent transition-transform duration-300 ease-out group-hover:scale-x-100" />
-                    <span className="absolute -bottom-px left-0 h-px w-full bg-line" />
-                  </button>
-                  {segment.tail}
-                </span>
-              </span>
+              {segment.lead}
             </motion.span>
           )}
         </AnimatePresence>
