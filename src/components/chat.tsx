@@ -600,6 +600,8 @@ export function Chat() {
   /** Previous scrollTop and the settle timer, for the bubble lag. */
   const lastScrollTopRef = useRef(0);
   const lagResetRef = useRef(0);
+  /** True while WE are scrolling the list, so the lag physics sits it out. */
+  const programmaticScrollRef = useRef(false);
 
   /* Suggestion chips. Held here rather than inside Suggestions so the master
    * control can live outside the scrolling row, past the message scrollbar. */
@@ -720,10 +722,22 @@ export function Chat() {
     [commit],
   );
 
-  // Keep the newest message in view as the reply streams in.
+  /* Keep the newest message in view.
+   *
+   * Flagged as ours, because this fires the same scroll handler a real scroll
+   * does. Without the flag the lag physics treated every auto-scroll as the
+   * visitor yanking the list, and shoved every bubble sideways each time a
+   * message arrived. */
   useEffect(() => {
     const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (!el) return;
+    programmaticScrollRef.current = true;
+    el.scrollTop = el.scrollHeight;
+    lastScrollTopRef.current = el.scrollTop;
+    const id = window.setTimeout(() => {
+      programmaticScrollRef.current = false;
+    }, 120);
+    return () => window.clearTimeout(id);
   }, [messages, pending]);
 
   /* Note: deliberately NOT aborting the in-flight request on unmount.
@@ -934,9 +948,14 @@ export function Chat() {
            * travel by an amount proportional to how fast you moved, then let
            * them settle back. Scrolling down makes the stack drop behind you;
            * scrolling up flicks it back. The spring-back is the CSS transition
-           * on .bubble-lag, triggered by resetting the value once you pause. */
+           * on .bubble-lag, triggered by resetting the value once you pause.
+           *
+           * Only for scrolls the visitor caused. Auto-scrolling to a new
+           * message is not someone dragging the list. */
           const delta = el.scrollTop - lastScrollTopRef.current;
           lastScrollTopRef.current = el.scrollTop;
+          if (programmaticScrollRef.current) return;
+
           const lag = Math.max(-16, Math.min(16, delta * 0.7));
           el.style.setProperty("--bubble-lag", `${lag}px`);
 
@@ -958,7 +977,9 @@ export function Chat() {
             <Bubble key={index} message={message} animate />
           ))}
 
-          <AnimatePresence>{pending && <TypingDots />}</AnimatePresence>
+          <AnimatePresence mode="popLayout">
+          {pending && <TypingDots />}
+        </AnimatePresence>
 
           {/* Clears the controls stacked at the bottom, so the newest message
               comes to rest above the glass rather than under it. */}
