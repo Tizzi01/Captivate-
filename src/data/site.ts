@@ -43,27 +43,36 @@ export type GalleryImage = {
 export type Segment =
   | { kind: "text"; value: string }
   | { kind: "link"; value: string; href: string; newTab?: boolean }
-  /** Inline phrase that expands into a small story card on hover/tap. */
+  /** Inline phrase that expands into a small story card on hover/tap.
+   *  `title` is optional: leave it out when the card is one paragraph and a
+   *  heading would just be repeating the phrase you hovered. */
   | {
       kind: "reveal";
       value: string;
-      title: string;
+      title?: string;
       body: string;
       href?: string;
       hrefLabel?: string;
     }
   /** Hidden until clicked. For things that are better as a small surprise. */
   | { kind: "spoiler"; value: string; reveal: string }
-  /** Opens a scrollable set of pictures with a short lead-in. */
+  /** A hover card whose text contains its own link into a set of pictures.
+   *  The card reads as a sentence, and one phrase in it opens the gallery:
+   *  `lead` + `trigger` + `tail`. */
   | {
       kind: "gallery";
       value: string;
       /** Shown on hover, to tease rather than explain. */
       teaser: string;
+      lead: string;
+      trigger: string;
+      tail?: string;
       title: string;
-      body: string;
       images: GalleryImage[];
     }
+  /** A nested drop-down inside the extras list. Same motion as "other stuff",
+   *  but it carries its own items and owns its own open state. */
+  | { kind: "expandable"; value: string; items: Paragraph[] }
   /** Toggles a list of extra items open. Used once, for "other stuff". */
   | { kind: "disclosure"; value: string };
 
@@ -169,47 +178,87 @@ export const otherStuff: Paragraph[] = [
     {
       kind: "reveal",
       value: "game jam",
-      title: "The game jam",
-      body: "Hack Club hosted a game jam and I somehow finished in the top 30. The game is still playable, and it's pretty rough around the edges in the way jam games usually are.",
+      body: "Hack Club is a global nonprofit network of student led high school coding clubs. They basically want teens to code and ship stuff. I finished in the top 30 of their Shiba Arcade event. The game is still playable, and it's pretty rough around the edges, but I'm still happy with how it turned out since it was my first time.",
       href: "https://lovely-torte-2b3aef.netlify.app/tizzis%20final%20game%20tt",
       hrefLabel: "Play the game",
     },
-    { kind: "text", value: " hosted by Hack Club and won a " },
+    { kind: "text", value: " hosted by " },
+    {
+      kind: "link",
+      value: "Hack Club",
+      href: "https://shiba.hackclub.com/",
+    },
+    { kind: "text", value: " and won a " },
     {
       kind: "gallery",
       value: "trip to Japan",
       teaser: "there are pictures",
-      title: "The Japan trip",
-      body: "I didn't actually get to go, visa stuff got in the way. Here's the next best thing: the letter, and a few shots from the people who made it.",
-      /* TODO(Tizzi): drop the files in /public/japan and list them here.
-         Order is the order they appear in. */
-      images: [],
+      title: "Shiba Arcade",
+      lead: "🥹 Wasn't able to go due to visa complications. But here's ",
+      trigger: "the next best thing",
+      tail: ".",
+      /* The files these point at live in public/japan. Anything that fails to
+         load is dropped from the gallery rather than showing a broken frame,
+         so a missing file is invisible rather than embarrassing. */
+      images: [
+        {
+          src: "/japan/invite.png",
+          alt: "The invitation email to the Shiba Arcade exhibition",
+          caption: "The invite.",
+        },
+        {
+          src: "/japan/arcade.jpg",
+          alt: "Participants building arcade cabinets at Spacebar Studio",
+          caption: "From the people who made it.",
+        },
+        {
+          src: "/japan/room.jpg",
+          alt: "Someone asleep in a bunk at the venue",
+          caption: "From the people who made it.",
+        },
+        {
+          src: "/japan/couldnt-go.png",
+          alt: "A list of people who bought tickets but could not go",
+          caption: "🥀",
+        },
+        {
+          src: "/japan/la-peace.gif",
+          alt: "The la peace meme",
+          caption: "Sucked a lot in the moment, but I've found la peace.",
+        },
+      ],
     },
     { kind: "text", value: "." },
   ],
   [
-    { kind: "text", value: "I can type at around " },
     {
-      kind: "reveal",
-      value: "120 WPM",
-      title: "On typing",
-      body: "Typing is genuinely one of the most underrated skills to have. If you don't know how to touch type, learn it. It'll save you a ridiculous amount of time in the long run.",
-    },
-    { kind: "text", value: "." },
-  ],
-  [
-    {
-      kind: "text",
-      value:
-        "I got way too into Rubik's Cubes during COVID. My best 3x3 solve was around 18 seconds.",
+      kind: "expandable",
+      value: "some random facts about me",
+      items: [
+        [
+          {
+            kind: "text",
+            value:
+              "I was really into Rubik's Cubes during Covid. My best 3x3 solve was around 18 seconds.",
+          },
+        ],
+        [
+          { kind: "text", value: "I can type at around " },
+          {
+            kind: "reveal",
+            value: "120 wpm",
+            body: "Genuinely one of the most underrated skills to have. Saves a ton of time in the long run.",
+          },
+        ],
+      ],
     },
   ],
   [
     { kind: "text", value: "The skill I'm most proud of: " },
     {
       kind: "spoiler",
-      value: "I can figure things out",
-      reveal: "I can figure things out.",
+      value: "I can make it work",
+      reveal: "I can make it work.",
     },
   ],
 ];

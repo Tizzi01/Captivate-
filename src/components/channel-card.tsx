@@ -34,12 +34,20 @@ function Stat({
 export function ChannelCard({
   channel,
   index,
+  locked = false,
 }: {
   channel: ResolvedChannel;
   index: number;
+  /* Identity withheld. The server has already stripped the name, avatar and
+   * id out of `channel` before it got here, so this only decides how to
+   * present the absence: no link to follow, and a lock where the logo goes. */
+  locked?: boolean;
 }) {
   const { play } = useSound();
   const { stats } = channel;
+  /* A locked card is not a link: there is nowhere to send anyone, and the id
+   * that would build the URL was never sent. */
+  const Wrapper = locked ? "div" : "a";
   const href = `https://www.youtube.com/channel/${channel.channelId}`;
 
   const subscriberValue = channel.subscribersHidden
@@ -58,18 +66,41 @@ export function ChannelCard({
         ease: [0.22, 1, 0.36, 1],
       }}
     >
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer noopener"
-        onPointerEnter={() => play("hover")}
-        onClick={() => play("click")}
-        className="group flex h-full flex-col rounded-lg border border-line bg-surface p-5 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-ink/25"
+      <Wrapper
+        {...(locked
+          ? {}
+          : {
+              href,
+              target: "_blank",
+              rel: "noreferrer noopener",
+              onPointerEnter: () => play("hover"),
+              onClick: () => play("click"),
+            })}
+        className={`group flex h-full flex-col rounded-lg border border-line bg-surface p-5 transition-all duration-300 ease-out ${
+          locked ? "" : "hover:-translate-y-0.5 hover:border-ink/25"
+        }`}
       >
         {/* header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            {channel.avatarUrl ? (
+            {locked ? (
+              <div
+                aria-hidden="true"
+                className="grid size-11 place-items-center rounded-full border border-line text-muted"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  className="size-4"
+                >
+                  <rect x="4" y="11" width="16" height="9" rx="2" />
+                  <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                </svg>
+              </div>
+            ) : channel.avatarUrl ? (
               <Image
                 src={channel.avatarUrl}
                 alt=""
@@ -137,7 +168,7 @@ export function ChannelCard({
             {channel.highlight}
           </p>
         )}
-      </a>
+      </Wrapper>
     </motion.article>
   );
 }

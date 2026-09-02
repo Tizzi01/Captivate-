@@ -130,8 +130,14 @@ function RevealSegment({
             className="absolute left-0 top-full z-40 block w-[min(21rem,calc(100vw-3rem))] pt-3"
           >
             <span className="block rounded-lg border border-line bg-surface p-5 text-left shadow-[0_12px_40px_-12px_rgb(0_0_0/0.18)]">
-              <span className="block text-ink">{segment.title}</span>
-              <span className="mt-1.5 block text-muted">{segment.body}</span>
+              {segment.title && (
+                <span className="block text-ink">{segment.title}</span>
+              )}
+              <span
+                className={`block text-muted ${segment.title ? "mt-1.5" : ""}`}
+              >
+                {segment.body}
+              </span>
               {segment.href && (
                 <a
                   href={segment.href}
@@ -214,7 +220,22 @@ function GallerySegment({
   segment: Extract<Segment, { kind: "gallery" }>;
 }) {
   const [open, setOpen] = useState(false);
+  const [card, setCard] = useState(false);
+  /* Sources that 404ed. A picture that is not there yet leaves the gallery
+   * rather than sitting in it as a broken frame. */
+  const [broken, setBroken] = useState<string[]>([]);
+  const wrapperRef = useRef<HTMLSpanElement>(null);
   const { play } = useSound();
+
+  // Tapping outside closes the card on touch devices.
+  useEffect(() => {
+    if (!card) return;
+    const onDocPointerDown = (event: PointerEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) setCard(false);
+    };
+    document.addEventListener("pointerdown", onDocPointerDown);
+    return () => document.removeEventListener("pointerdown", onDocPointerDown);
+  }, [card]);
 
   useEffect(() => {
     if (!open) return;
@@ -225,20 +246,61 @@ function GallerySegment({
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
+  const showCard = () => {
+    if (!card) play("hover");
+    setCard(true);
+  };
+
+  const visible = segment.images.filter((image) => !broken.includes(image.src));
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => {
-          play("click");
-          setOpen(true);
-        }}
-        onPointerEnter={() => play("hover")}
-        title={segment.teaser}
-        className="group relative text-ink underline decoration-accent decoration-dotted decoration-1 underline-offset-4 transition-colors duration-200 hover:text-accent"
+      <span
+        ref={wrapperRef}
+        className="relative inline-block"
+        onMouseEnter={showCard}
+        onMouseLeave={() => setCard(false)}
       >
-        {segment.value}
-      </button>
+        <button
+          type="button"
+          onClick={() => setCard((prev) => !prev)}
+          onFocus={showCard}
+          aria-expanded={card}
+          title={segment.teaser}
+          className="cursor-help text-ink underline decoration-accent decoration-dotted decoration-1 underline-offset-4 transition-colors duration-200 hover:text-accent"
+        >
+          {segment.value}
+        </button>
+
+        <AnimatePresence>
+          {card && (
+            <motion.span
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute left-0 top-full z-40 block w-[min(21rem,calc(100vw-3rem))] pt-3"
+            >
+              <span className="block rounded-lg border border-line bg-surface p-5 text-left shadow-[0_12px_40px_-12px_rgb(0_0_0/0.18)]">
+                <span className="block text-muted">
+                  {segment.lead}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      play("click");
+                      setOpen(true);
+                    }}
+                    className="text-ink underline decoration-accent decoration-dotted decoration-1 underline-offset-4 transition-colors duration-200 hover:text-accent"
+                  >
+                    {segment.trigger}
+                  </button>
+                  {segment.tail}
+                </span>
+              </span>
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </span>
 
       <AnimatePresence>
         {open && (
@@ -283,15 +345,13 @@ function GallerySegment({
                 </button>
               </div>
 
-              <p className="mt-2 text-muted">{segment.body}</p>
-
-              {segment.images.length === 0 ? (
+              {visible.length === 0 ? (
                 <p className="mt-5 rounded-lg border border-dashed border-line px-4 py-6 text-center text-muted">
                   pictures coming
                 </p>
               ) : (
                 <div className="mt-5 space-y-4">
-                  {segment.images.map((image) => (
+                  {visible.map((image) => (
                     <figure key={image.src}>
                       {/* Plain img: these are local files of unknown size and
                           next/image would need each one's dimensions. */}
@@ -301,6 +361,13 @@ function GallerySegment({
                         alt={image.alt}
                         className="w-full rounded-lg border border-line"
                         loading="lazy"
+                        onError={() =>
+                          setBroken((prev) =>
+                            prev.includes(image.src)
+                              ? prev
+                              : [...prev, image.src],
+                          )
+                        }
                       />
                       {image.caption && (
                         <figcaption className="mt-1.5 text-sm text-muted">
@@ -351,6 +418,9 @@ export function Segments({
             return <SpoilerSegment key={index} segment={segment} />;
           case "gallery":
             return <GallerySegment key={index} segment={segment} />;
+          case "expandable":
+            return <ExpandableSegment key={index} segment={segment} />;
+
           case "disclosure":
             if (!disclosure) return <span key={index}>{segment.value}</span>;
             return (
@@ -364,6 +434,92 @@ export function Segments({
         }
       })}
     </>
+  );
+}
+
+/* --------------------------------------------------------- expandable -- */
+
+/* A drop-down that lives inside the extras list and carries its own items.
+ * Same motion as the "other stuff" one in intro.tsx, and the same rule about
+ * clipping: clipped while it moves so it slides out from behind the line
+ * above, then released on a timer so any hover card inside it is not sliced
+ * off at the bottom edge. */
+function ExpandableSegment({
+  segment,
+}: {
+  segment: Extract<Segment, { kind: "expandable" }>;
+}) {
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLSpanElement>(null);
+  const { play } = useSound();
+
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+
+    if (!open) {
+      el.style.overflow = "hidden";
+      return;
+    }
+
+    el.style.overflow = "hidden";
+    const release = window.setTimeout(() => {
+      el.style.overflow = "visible";
+    }, 380);
+    return () => window.clearTimeout(release);
+  }, [open]);
+
+  return (
+    <span className="block">
+      <button
+        type="button"
+        onClick={() => {
+          play("click");
+          setOpen((prev) => !prev);
+        }}
+        onPointerEnter={() => play("hover")}
+        aria-expanded={open}
+        className="group relative inline-flex items-center gap-1 text-ink transition-colors duration-200 hover:text-accent"
+      >
+        {segment.value}
+        <span className="absolute -bottom-px left-0 h-px w-full bg-line" />
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`size-3 transition-transform duration-300 ease-out ${
+            open ? "rotate-180" : ""
+          }`}
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.span
+            ref={boxRef}
+            className="block"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <span className="mt-2.5 block space-y-2 border-l border-line pl-4">
+              {segment.items.map((paragraph, index) => (
+                <span key={index} className="block">
+                  <Segments paragraph={paragraph} />
+                </span>
+              ))}
+            </span>
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </span>
   );
 }
 

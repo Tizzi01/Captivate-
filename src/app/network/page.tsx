@@ -5,7 +5,9 @@ import { FadeIn } from "@/components/fade-in";
 import { BackLink } from "@/components/back-link";
 import { BRAND, orderedChannels, person } from "@/data/site";
 import { compact } from "@/lib/format";
+import { isUnlocked } from "@/lib/unlock";
 import { getChannelStats } from "@/lib/youtube";
+import { UnlockForm } from "@/components/unlock-form";
 
 /* This page is written to stand on its own — it carries the Captivate brand,
  * not Tizzi's, so the URL can be shared by itself without handing someone a
@@ -22,6 +24,28 @@ export default async function NetworkPage() {
   // Server-side. One request covers every channel; the result is cached and
   // revalidated on the interval set in src/data/site.ts.
   const resolved = await getChannelStats(orderedChannels);
+  const unlocked = await isUnlocked();
+
+  /* Locked visitors get the shape of the network, not its identity: the
+   * numbers stay, the names, avatars and links do not.
+   *
+   * Redacted HERE, on the server, and not merely hidden with CSS or skipped in
+   * the markup. Everything handed to ChannelCard is serialised into the page
+   * for React to pick up, so a name passed down and then not displayed would
+   * still be sitting in the page source. What is not in this object never
+   * leaves the building.
+   *
+   * slug included: it is derived from the channel name, so it gives the game
+   * away as readily as the name does. */
+  const channels = unlocked
+    ? resolved
+    : resolved.map((channel, index) => ({
+        ...channel,
+        slug: `locked-${index}`,
+        name: `Channel ${index + 1}`,
+        channelId: "",
+        avatarUrl: null,
+      }));
 
   const withStats = resolved.filter((channel) => channel.stats !== null);
   const totals = withStats.reduce(
@@ -85,11 +109,28 @@ export default async function NetworkPage() {
             )}
           </div>
         </FadeIn>
+        {!unlocked && (
+          <FadeIn delay={0.3}>
+            <div className="mt-6 rounded-lg border border-dashed border-line px-4 py-5 pl-5 sm:pl-7">
+              <p className="text-muted">
+                The channels themselves aren&apos;t public yet. They will be before
+                long. Until then the names, logos and links need authorised
+                access.
+              </p>
+              <UnlockForm label="Unlock" />
+            </div>
+          </FadeIn>
+        )}
       </header>
 
       <section className="mt-10 grid gap-4 sm:mt-14 sm:grid-cols-2">
-        {resolved.map((channel, index) => (
-          <ChannelCard key={channel.slug} channel={channel} index={index} />
+        {channels.map((channel, index) => (
+          <ChannelCard
+            key={channel.slug}
+            channel={channel}
+            index={index}
+            locked={!unlocked}
+          />
         ))}
       </section>
 
