@@ -382,7 +382,10 @@ function GallerySegment({
     <>
       <span
         ref={wrapperRef}
-        className="relative inline-block"
+        /* Plain inline, not inline-block: the continuation below has to be
+           able to wrap onto the next line with the rest of the paragraph.
+           The wrapper covers the phrase AND the continuation, so moving onto
+           the text to click through to the pictures does not dismiss it. */
         onMouseEnter={showCard}
         onMouseLeave={() => setCard(false)}
       >
@@ -402,18 +405,29 @@ function GallerySegment({
         <AnimatePresence>
           {card && (
             <motion.span
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              /* No card, no box. It reads as the sentence carrying on past
-                 the phrase, so it is plain text set beside it, picking up
-                 where the line left off. Under it on a narrow screen, where
-                 there is no room alongside. */
-              className="absolute left-0 top-full z-40 block w-[min(22rem,calc(100vw-3rem))] pt-2 text-left sm:left-full sm:top-0 sm:w-[22rem] sm:pl-2 sm:pt-0"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              /* Set inline, inside the paragraph, so it genuinely continues
+                 the sentence and wraps with it.
+              
+                 It used to be positioned absolutely beside the phrase, which
+                 takes it out of the flow entirely. With the phrase near the
+                 end of a line there was nothing to sit beside, so it landed
+                 on top of the lines underneath instead.
+              
+                 It goes AFTER the phrase, never before, so the phrase does not
+                 move when it appears. If it moved, the pointer would slide off
+                 the very thing holding it open and it would flicker.
+              
+                 And it is not rendered at all until hovered, rather than
+                 hidden: there is nothing sitting in the page to be selected or
+                 clicked by accident. */
+              className="text-muted"
             >
-              <span className="block">
-                <span className="block text-muted">
+              <span>
+                <span className="text-muted">
                   {segment.lead}
                   <button
                     type="button"

@@ -200,9 +200,11 @@ export const otherStuff: Paragraph[] = [
       value: "trip to Japan",
       teaser: "there are pictures",
       title: "Shiba Arcade",
-      lead: "🥹 Wasn't able to go due to visa complications. But here's ",
+      /* Opens with the full stop that closes "trip to Japan", because the
+         paragraph supplies its own after this segment and that one then lands
+         at the very end of the sentence. */
+      lead: ". 🥹 Wasn't able to go due to visa complications. But here's ",
       trigger: "the next best thing",
-      tail: ".",
       /* The files these point at live in public/japan. Anything that fails to
          load is dropped from the gallery rather than showing a broken frame,
          so a missing file is invisible rather than embarrassing. */
