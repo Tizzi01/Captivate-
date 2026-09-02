@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { useSound } from "@/components/sound";
+import { Slam, composeStack, hashSeed } from "@/components/slam-stack";
 import type { GalleryImage, Paragraph, Segment } from "@/data/site";
 
 /* ------------------------------------------------------------ text link -- */
@@ -212,18 +213,6 @@ function SpoilerSegment({
 
 /* -------------------------------------------------------------- gallery -- */
 
-/* A small, fixed tilt per picture, so the stack looks laid down by hand rather
- * than aligned by a machine. Derived from the filename, so a picture always
- * sits at the same angle instead of jumping about on every render. */
-function tiltFor(src: string): number {
-  let hash = 2166136261;
-  for (let i = 0; i < src.length; i++) {
-    hash ^= src.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return (((hash >>> 0) % 1000) / 1000) * 2.4 - 1.2;
-}
-
 type ImageGroup = {
   images: GalleryImage[];
   caption?: string;
@@ -257,6 +246,63 @@ function groupImages(images: GalleryImage[]): ImageGroup[] {
   }
 
   return out;
+}
+
+/* The pile itself, split out so it mounts with the dialog. If the reveal lived
+ * in GallerySegment it would fire on page load, and by the time anyone opened
+ * the pictures the entrance would be long over. */
+function GalleryPictures({
+  groups,
+  seed,
+  onBroken,
+}: {
+  groups: ImageGroup[];
+  seed: string;
+  onBroken: (src: string) => void;
+}) {
+  const stack = composeStack(groups.length, hashSeed(seed));
+
+  return (
+    <div className="mt-5 space-y-7">
+      {groups.map((group, gi) => (
+        <Slam
+          key={group.images[0].src}
+          placed={stack[gi]}
+          idx={gi}
+          className="block"
+        >
+          <figure className="space-y-2">
+            {group.images.map((image) => (
+              <span key={image.src} className="relative block">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  className="w-full rounded-lg border border-line"
+                  loading="lazy"
+                  onError={() => onBroken(image.src)}
+                />
+                {image.overlay && image.caption && (
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 grid place-items-center text-6xl drop-shadow-[0_6px_16px_rgba(0,0,0,0.5)] sm:text-7xl"
+                  >
+                    {image.caption}
+                  </span>
+                )}
+              </span>
+            ))}
+
+            {group.caption && !group.overlay && (
+              <figcaption className="text-sm leading-normal text-muted">
+                {group.caption}
+              </figcaption>
+            )}
+          </figure>
+        </Slam>
+      ))}
+    </div>
+  );
 }
 
 /* Teases on hover, opens a set of pictures on click. Rendered as a dialog so
@@ -399,65 +445,15 @@ function GallerySegment({
                   pictures coming
                 </p>
               ) : (
-                <div className="mt-5 space-y-7">
-                  {groups.map((group, gi) => (
-                    <motion.figure
-                      key={group.images[0].src}
-                      initial={{
-                        opacity: 0,
-                        y: 26,
-                        scale: 0.96,
-                        rotate: tiltFor(group.images[0].src) * 1.8,
-                        filter: "blur(4px)",
-                      }}
-                      animate={{
-                        opacity: 1,
-                        y: 0,
-                        scale: 1,
-                        rotate: tiltFor(group.images[0].src),
-                        filter: "blur(0px)",
-                      }}
-                      transition={{
-                        duration: 0.46,
-                        delay: gi * 0.09,
-                        ease: [0.16, 1, 0.3, 1],
-                      }}
-                      className="space-y-2 drop-shadow-[0_2px_3px_rgba(20,20,25,0.16)]"
-                    >
-                      {group.images.map((image) => (
-                        <span key={image.src} className="relative block">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={image.src}
-                            alt={image.alt}
-                            className="w-full rounded-lg border border-line"
-                            loading="lazy"
-                            onError={() =>
-                              setBroken((prev) =>
-                                prev.includes(image.src)
-                                  ? prev
-                                  : [...prev, image.src],
-                              )
-                            }
-                          />
-                          {image.overlay && image.caption && (
-                            <span
-                              aria-hidden="true"
-                              className="pointer-events-none absolute inset-0 grid place-items-center text-6xl drop-shadow-[0_6px_16px_rgba(0,0,0,0.5)] sm:text-7xl"
-                            >
-                              {image.caption}
-                            </span>
-                          )}
-                        </span>
-                      ))}
-                      {group.caption && !group.overlay && (
-                        <figcaption className="text-sm text-muted">
-                          {group.caption}
-                        </figcaption>
-                      )}
-                    </motion.figure>
-                  ))}
-                </div>
+                <GalleryPictures
+                  groups={groups}
+                  seed={segment.value}
+                  onBroken={(src) =>
+                    setBroken((prev) =>
+                      prev.includes(src) ? prev : [...prev, src],
+                    )
+                  }
+                />
               )}
             </motion.div>
           </motion.div>
