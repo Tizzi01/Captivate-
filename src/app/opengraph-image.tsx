@@ -62,6 +62,16 @@ export default function Image() {
             fontSize: 83,
             fontWeight: 700,
             color: INK,
+            /* Pushes the pair down half of this, and it is the difference
+               between measuring centred and looking centred.
+
+               Centring the block puts equal space above and below it, but the
+               two lines are nowhere near equal weight: a big black word over a
+               small grey one. The eye finds the centre of the ink, not of the
+               box, and that sat 12.5px high. This drops it onto the real one.
+               Measured, not guessed: see the centre of mass, not the bounding
+               box, if either line ever changes size. */
+            marginTop: 25,
             /* No letter-spacing, and that is the fix rather than an omission.
                Tracking is applied after every character including the last, so
                a negative value makes the text box end inside the final glyph.
