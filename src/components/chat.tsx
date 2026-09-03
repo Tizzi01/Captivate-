@@ -613,6 +613,14 @@ const CHIP_FALL = 0.42;
 const BIN_OUT = 0.22;
 const DISMISS_TOTAL_MS = (BIN_IN + CHIP_FALL + BIN_OUT + 0.14) * 1000;
 
+/* How long a chip takes to leave after being ASKED, as opposed to binned.
+ *
+ * Deliberately not the bin animation. Dropping a chip into a bin is a gesture
+ * of rejection, and a question that has just been asked was not rejected: it
+ * did its job. It fades instead, and the row closes the gap behind it. */
+const ASKED_FADE = 0.22;
+const ASKED_FADE_MS = ASKED_FADE * 1000;
+
 /* A bin that pops up, takes a hit as something lands in it, then leaves. */
 function Bin({ size = "size-5" }: { size?: string }) {
   return (
@@ -655,11 +663,26 @@ function Chip({
   flightDelay?: number;
 }) {
   const [dismissing, setDismissing] = useState(false);
+  const [asked, setAsked] = useState(false);
 
   const startDismiss = () => {
-    if (dismissing) return;
+    if (dismissing || asked) return;
     setDismissing(true);
     window.setTimeout(onDismiss, DISMISS_TOTAL_MS);
+  };
+
+  /* Once it has been asked, the chip has nothing left to offer: it is a button
+   * that repeats a question already in the conversation directly above it. It
+   * sends and then goes, and the row closes up.
+   *
+   * Removed on a timer rather than immediately so the fade is actually seen.
+   * Taking it out of the list on click would unmount it mid-frame and the gap
+   * would snap shut under the pointer. */
+  const pick = () => {
+    if (dismissing || asked) return;
+    setAsked(true);
+    onPick(label);
+    window.setTimeout(onDismiss, ASKED_FADE_MS);
   };
 
   // Flying to the master bin takes priority over an individual dismissal.
@@ -715,12 +738,16 @@ function Chip({
         animate={
           dismissing
             ? { y: 26, scale: 0.12, opacity: 0, rotate: 14 }
-            : { y: 0, scale: 1, opacity: 1, rotate: 0 }
+            : asked
+              ? { y: 0, scale: 0.94, opacity: 0, rotate: 0 }
+              : { y: 0, scale: 1, opacity: 1, rotate: 0 }
         }
         transition={
           dismissing
             ? { duration: CHIP_FALL, delay: BIN_IN, ease: [0.5, 0, 0.75, 0] }
-            : { duration: 0.2, ease: EASE }
+            : asked
+              ? { duration: ASKED_FADE, ease: EASE }
+              : { duration: 0.2, ease: EASE }
         }
         /* Each chip is its own piece of glass, not a flat thing sitting inside
            one big glass capsule. */
@@ -728,7 +755,7 @@ function Chip({
       >
         <button
           type="button"
-          onClick={() => onPick(label)}
+          onClick={pick}
           className="whitespace-nowrap py-1 pl-3 pr-1 text-sm text-muted transition-colors duration-200 group-hover:text-ink"
         >
           {label}

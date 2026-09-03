@@ -152,7 +152,11 @@ export async function POST(request: Request) {
       config: {
         systemInstruction: SYSTEM_PROMPT,
         maxOutputTokens: CHAT_LIMITS.maxOutputTokens,
-        temperature: 0.9, // a bit loose, so it doesn't sound robotic
+        /* Loose on purpose. The persona pins down every fact, so the only
+         * thing this is free to change is the wording, which is exactly what
+         * stops the same question returning the same sentence forever. Lower
+         * than this and short answers collapse to one phrasing every time. */
+        temperature: 1.0,
       },
     });
 
