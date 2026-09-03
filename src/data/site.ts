@@ -160,7 +160,7 @@ export const person = {
   /* What the title actually covers, revealed on hover. The title alone is a
      job description; this is the work. Leading space because it continues the
      heading on the same line. */
-  greetingAside: " Ideation/Scripting/Editing/Thumbnails & everything else",
+  greetingAside: " Ideation/Scripting/Editing/Thumbnails",
   /* The short form, for the link preview card. The heading on the page keeps
      the "(YouTube)" because it is answering "director of what"; on a card with
      nothing else on it, the bracket is just noise. */
