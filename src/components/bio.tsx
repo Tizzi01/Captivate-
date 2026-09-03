@@ -483,7 +483,9 @@ function GallerySegment({
                   type="button"
                   onClick={() => setOpen(false)}
                   aria-label="Close"
-                  className="fixed right-6 top-6 z-10 grid size-8 place-items-center rounded-full border border-line bg-bg/80 text-muted backdrop-blur-sm transition-colors duration-200 hover:text-ink"
+                  /* 44px without a cursor, where it is the only way out of a
+                     full-screen overlay, back to 32 once there is one. */
+                  className="fixed right-6 top-6 z-10 grid size-11 place-items-center rounded-full border border-line bg-bg/80 text-muted backdrop-blur-sm transition-colors duration-200 hover:text-ink [@media(hover:hover)]:size-8"
                 >
                   <svg
                     viewBox="0 0 24 24"

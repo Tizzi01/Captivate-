@@ -119,30 +119,36 @@ export default async function NetworkPage() {
        * use, so the summary can never disagree with the grid above it. */}
       <FadeIn delay={0.6}>
         <section className="mt-14 border-t border-line pt-10">
+          {/* Each cell is a column with the number pushed to the bottom.
+              Without that the number simply follows its label, so "Total long
+              form views" wrapping onto a second line on a narrow screen
+              dropped its number a line below the one beside it. Cells in a
+              grid row are already equal height, so pinning the number to the
+              bottom lines them all up at any width. */}
           <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
-            <div>
+            <div className="flex flex-col">
               <dt className="text-ink">Views</dt>
               <dd className="mt-0.5 text-muted">Total long form views</dd>
-              <dd className="mt-3 text-3xl text-ink">
+              <dd className="mt-auto pt-3 text-3xl text-ink">
                 {anyStats ? `${compact(totals.views)}+` : "-"}
               </dd>
             </div>
-            <div>
+            <div className="flex flex-col">
               <dt className="text-ink">Videos</dt>
               <dd className="mt-0.5 text-muted">Across all channels</dd>
-              <dd className="mt-3 text-3xl text-ink">
+              <dd className="mt-auto pt-3 text-3xl text-ink">
                 {anyStats ? `${totals.videos}+` : "-"}
               </dd>
             </div>
-            <div>
+            <div className="flex flex-col">
               <dt className="text-ink">Channels</dt>
               <dd className="mt-0.5 text-muted">Growing network</dd>
-              <dd className="mt-3 text-3xl text-ink">{channels.length}+</dd>
+              <dd className="mt-auto pt-3 text-3xl text-ink">{channels.length}+</dd>
             </div>
-            <div>
+            <div className="flex flex-col">
               <dt className="text-ink">Subscribers</dt>
               <dd className="mt-0.5 text-muted">Across all channels</dd>
-              <dd className="mt-3 text-3xl text-ink">
+              <dd className="mt-auto pt-3 text-3xl text-ink">
                 {anyStats ? `${compact(totals.subscribers)}+` : "-"}
               </dd>
             </div>

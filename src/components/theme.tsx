@@ -20,6 +20,26 @@ import { useSound } from "@/components/sound";
 const STORAGE_KEY = "crantwiz:theme";
 const WIPE_MS = 700;
 
+/** Below this width the wipe starts from the middle of the screen instead of
+ *  from the button. Matches Tailwind's sm breakpoint, which is where the rest
+ *  of the layout changes too. */
+const WIPE_FROM_CENTRE_BELOW = 640;
+
+/* Whether the circle should grow from the middle of the screen rather than
+ * from the button.
+ *
+ * Two ways to qualify, because width alone was not enough. A tablet is wide
+ * enough to pass a width test while still having the button parked in a far
+ * corner with no pointer anywhere near it, so the wipe appears to come from
+ * nothing. Anything without hover has no cursor for the circle to belong to,
+ * whatever its width. */
+function wipeFromCentre(): boolean {
+  return (
+    window.innerWidth < WIPE_FROM_CENTRE_BELOW ||
+    window.matchMedia("(hover: none)").matches
+  );
+}
+
 /** Injected into <head>. Deliberately tiny and dependency-free. */
 export const THEME_SCRIPT = `
 (function () {
@@ -124,9 +144,28 @@ export function ThemeToggle() {
     // globals.css, which clears every corner from any origin.
     const box = buttonRef.current?.getBoundingClientRect();
     const root = document.documentElement;
-    if (box) {
+
+    /* On a phone the button sits in the very corner, and a circle of 150vmax
+     * grown from there has covered the screen 231ms into a 700ms animation.
+     * The remaining two thirds happen outside the viewport, so what is
+     * actually seen is a small fast flick out of the corner rather than a
+     * sweep across the screen.
+     *
+     * Narrow screens therefore start from the middle and use a radius
+     * measured to the exact furthest corner, which is half the diagonal from
+     * the centre. The whole duration is then spent on screen. Wider screens
+     * keep the button origin and the 150vmax fallback, unchanged. */
+    if (wipeFromCentre()) {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      root.style.setProperty("--wipe-x", `${cx}px`);
+      root.style.setProperty("--wipe-y", `${cy}px`);
+      root.style.setProperty("--wipe-r", `${Math.ceil(Math.hypot(cx, cy))}px`);
+    } else if (box) {
       root.style.setProperty("--wipe-x", `${box.left + box.width / 2}px`);
       root.style.setProperty("--wipe-y", `${box.top + box.height / 2}px`);
+      // Back to the CSS fallback, in case the window was narrow a moment ago.
+      root.style.removeProperty("--wipe-r");
     }
     root.style.setProperty("--wipe-duration", `${WIPE_MS}ms`);
 
@@ -162,7 +201,10 @@ export function ThemeToggle() {
       onPointerEnter={() => play("hover")}
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
       title={`${dark ? "Light mode" : "Dark mode"} (or press Enter)`}
-      className="relative grid size-8 place-items-center rounded-full text-muted transition-colors duration-200 hover:text-ink"
+      /* 44px wherever there is no cursor, the smallest a finger lands on
+         reliably, shrinking to the original 32 once there is one. Keyed on
+         hover rather than width: a tablet is wide and still all thumbs. */
+      className="relative grid size-11 place-items-center rounded-full text-muted transition-colors duration-200 hover:text-ink [@media(hover:hover)]:size-8"
     >
       {/* Both icons are rendered; CSS picks one off the .dark class on <html>.
           That matters: the class flips synchronously inside the transition

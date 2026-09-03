@@ -86,7 +86,16 @@ function Row({
             onClick={onToggle}
             aria-expanded={open}
             aria-label={`About ${item.label}`}
-            className="text-sm text-muted underline decoration-dotted underline-offset-4 sm:hidden"
+            /* py-3 makes the hit area 44px tall, the smallest a finger lands
+               on reliably; -my-3 takes exactly that padding back out of the
+               layout, so the target grows and nothing moves. This control is
+               only shown without hover, so it is a touch concern only.
+
+               Hidden by HOVER rather than by width. It used to be sm:hidden,
+               which reads as "phones", but a tablet is wide enough to clear
+               that breakpoint and still has no cursor: the button vanished and
+               the note it opens was reachable by nothing at all. */
+            className="-my-3 py-3 text-sm text-muted underline decoration-dotted underline-offset-4 [@media(hover:hover)]:hidden"
           >
             {open ? "less" : "more"}
           </button>

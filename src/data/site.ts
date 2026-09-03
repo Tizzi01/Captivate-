@@ -374,7 +374,7 @@ export const channels: Channel[] = [
     slug: "staranime",
     name: "Star Anime",
     channelId: "UCW-RsP9NXc_4pWZqucRnPAA",
-    note: "The flagship channel and the fastest-growing one in the network. I do everything on it myself apart from the scripts and the voiceover, and I still review every script closely.",
+    note: "The flagship channel and the fastest growing one in the network. I do everything on it myself apart from the scripts and the voiceover (though I still review every script closely)",
     credit: {
       name: "Alserex",
       avatar: "/people/alserex.png",

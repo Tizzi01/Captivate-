@@ -174,7 +174,9 @@ body {
     clip-path: circle(0px at var(--wipe-x, 50%) var(--wipe-y, 50%));
   }
   to {
-    clip-path: circle(150vmax at var(--wipe-x, 50%) var(--wipe-y, 50%));
+    clip-path: circle(
+      var(--wipe-r, 150vmax) at var(--wipe-x, 50%) var(--wipe-y, 50%)
+    );
   }
 }
 
@@ -504,5 +506,35 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .credit-room {
     transition: none;
+  }
+}
+
+/* ============================================================================
+ *  TOUCH — where a hover was the only way in.
+ *
+ *  Several things here reveal themselves on hover, which is fine with a mouse
+ *  and means "invisible, forever" on a phone. The thank you under the channel
+ *  card was the worst of them: it existed only while hovered, so on a
+ *  touchscreen Alserex was simply not credited.
+ *
+ *  Rather than invent a tap gesture for it, on a device with no hover the card
+ *  stops floating and becomes part of the page: always visible, in the flow,
+ *  taking its own room. The strip that opens to make space for it is then not
+ *  needed, so it stays shut.
+ * ========================================================================= */
+@media (hover: none) {
+  .credit-card {
+    position: static;
+    margin-top: 0.75rem;
+    opacity: 1;
+    transform: none;
+    /* It is real content on touch, not an overlay, so it should not be
+       transparent to taps or animate in from nowhere. */
+    pointer-events: auto;
+    transition: none;
+  }
+
+  .credit-room {
+    height: 0 !important;
   }
 }

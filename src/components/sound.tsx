@@ -204,7 +204,8 @@ export function SoundToggle() {
       aria-pressed={enabled}
       aria-label={enabled ? "Mute interface sounds" : "Unmute interface sounds"}
       title={enabled ? "Sound on" : "Sound off"}
-      className="grid size-8 place-items-center rounded-full text-muted transition-colors duration-200 hover:text-ink"
+      /* 44px without a cursor, 32 with one. See ThemeToggle. */
+      className="grid size-11 place-items-center rounded-full text-muted transition-colors duration-200 hover:text-ink [@media(hover:hover)]:size-8"
     >
       <svg
         viewBox="0 0 24 24"

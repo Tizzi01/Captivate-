@@ -135,8 +135,13 @@ export function Slam({
     position: "relative",
     zIndex: z,
     cursor: "grab",
-    // Otherwise the browser scrolls the page instead of letting go of a drag.
-    touchAction: "none",
+    /* "none" here, which is what a drag wants, meant a finger placed on a
+       picture could not scroll the page at all: every touch became a drag and
+       the gallery was a wall. "pan-y" gives vertical scrolling back to the
+       browser, which is what a phone is overwhelmingly being asked for, and
+       still lets a mouse drag in any direction. The touch drag itself is
+       turned off in use-magnetism. */
+    touchAction: "pan-y",
     willChange: "transform",
   };
 

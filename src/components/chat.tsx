@@ -541,6 +541,22 @@ function easeListToBottom(el: HTMLElement, duration = 340): () => void {
  *  height of the greeting alone, and this. */
 const PANEL_PX = 384;
 
+/* The same height, unless the screen is too short to give it.
+ *
+ * 384px is a comfortable panel on a laptop and most of a small phone: on a
+ * 667px screen it is 58% of everything visible before the browser chrome is
+ * counted, and the conversation ends up in a letterbox with nothing around it.
+ *
+ * Gated on WIDTH rather than height, deliberately. Keying it off height alone
+ * would also shrink the panel in a short desktop window, which is a change to
+ * a version that is finished and signed off. Below the breakpoint it takes at
+ * most 55% of the viewport; at or above it, this returns 384 and nothing about
+ * the desktop behaviour can differ. */
+function panelHeight(): number {
+  if (window.innerWidth >= 640) return PANEL_PX;
+  return Math.min(PANEL_PX, Math.round(window.innerHeight * 0.55));
+}
+
 /* A side only fades while a chip is actually crossing that border. At rest
  * there is nothing to the left, so no left fade and the first chip lines up
  * flush with the composer and the bubbles. Scrolled to the far right, nothing
@@ -1049,7 +1065,7 @@ export function Chat() {
 
     if (travelRef.current) {
       // The panel and the page, as one movement.
-      openAndTravel(el, PANEL_PX);
+      openAndTravel(el, panelHeight());
       return;
     }
 
@@ -1062,7 +1078,7 @@ export function Chat() {
      * browser coalesces both writes and the panel snaps. */
     el.style.height = `${el.getBoundingClientRect().height}px`;
     void el.offsetHeight;
-    el.style.height = `${PANEL_PX}px`;
+    el.style.height = `${panelHeight()}px`;
   }, [messages.length]);
 
   /* Keep the newest message in view, once there is anything to keep in view. */
@@ -1074,7 +1090,7 @@ export function Chat() {
     /* Nothing to scroll to until the conversation is taller than the panel,
      * and measuring the content rather than the box keeps that true even
      * during the one opening transition. */
-    if (content.scrollHeight <= PANEL_PX) return;
+    if (content.scrollHeight <= panelHeight()) return;
 
     return easeListToBottom(el);
   }, [messages, pending]);

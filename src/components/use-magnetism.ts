@@ -275,6 +275,12 @@ export function useMagnetism(host: RefObject<HTMLElement | null>): void {
       const node = nodes.get(target);
       if (!node) return;
 
+      /* Not by finger. Dragging a picture and scrolling past it are the same
+         gesture on a touchscreen, and scrolling is the one people actually
+         want: with the drag winning, the gallery could not be scrolled
+         through at all. Mouse and pen keep it. */
+      if (event.pointerType === "touch") return;
+
       // Otherwise the browser starts its own image drag instead.
       event.preventDefault();
       target.setPointerCapture(event.pointerId);
