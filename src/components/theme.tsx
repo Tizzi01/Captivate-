@@ -156,11 +156,33 @@ export function ThemeToggle() {
      * the centre. The whole duration is then spent on screen. Wider screens
      * keep the button origin and the 150vmax fallback, unchanged. */
     if (wipeFromCentre()) {
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      root.style.setProperty("--wipe-x", `${cx}px`);
-      root.style.setProperty("--wipe-y", `${cy}px`);
-      root.style.setProperty("--wipe-r", `${Math.ceil(Math.hypot(cx, cy))}px`);
+      /* All three values are viewport-relative, and that is the point.
+       *
+       * The first version of this set the radius in px, measured from the
+       * centre to the corner. On a phone it covered about a quarter of the
+       * screen: a quarter is what you get when a radius lands at half its
+       * intended length, and half is what a px length becomes when it meets a
+       * device pixel ratio of 2. The original code used vmax rather than px
+       * for exactly this reason, and swapping in px threw that away.
+       *
+       * Percentages and vmax are resolved against the viewport itself, so the
+       * pixel ratio never enters into it.
+       *
+       * The radius still has to be measured rather than fixed, because it is
+       * what keeps the animation on screen for its whole duration: too large
+       * and the circle covers everything early and the rest happens outside
+       * the frame, which is the flick this started as. From the centre the
+       * distance to the furthest corner is half the diagonal, expressed here
+       * as a fraction of the longer side, plus a point of margin for
+       * rounding. */
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const needed = Math.hypot(w, h) / 2;
+      const asVmax = (needed / Math.max(w, h)) * 100;
+
+      root.style.setProperty("--wipe-x", "50%");
+      root.style.setProperty("--wipe-y", "50%");
+      root.style.setProperty("--wipe-r", `${(asVmax + 1).toFixed(2)}vmax`);
     } else if (box) {
       root.style.setProperty("--wipe-x", `${box.left + box.width / 2}px`);
       root.style.setProperty("--wipe-y", `${box.top + box.height / 2}px`);
