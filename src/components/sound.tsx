@@ -21,7 +21,7 @@ import {
 
 export type SoundName = "hover" | "click" | "travel" | "theme";
 
-const STORAGE_KEY = "captivate:sound";
+const STORAGE_KEY = "crantwiz:sound";
 const MASTER_VOLUME = 0.06; // deliberately quiet
 const HOVER_THROTTLE_MS = 90;
 

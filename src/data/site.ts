@@ -8,8 +8,8 @@
 
 /* ---------------------------------------------------------------- brand -- */
 
-/** Change this one line to rebrand: "Captivate Media", "Captivate Network"... */
-export const BRAND = "Captivate";
+/** Change this one line to rebrand: "Crantwiz Media", "Crantwiz Network"... */
+export const BRAND = "Crantwiz";
 
 /** Typeface for the whole site. Flip this one word to compare.
  *  Add another option by adding an `html.font-NAME` block in globals.css. */
@@ -17,12 +17,12 @@ export const FONT: "lexend" | "arial" = "lexend";
 
 /** How often the server re-fetches YouTube stats, in seconds. 300 = 5 minutes.
  *  Costs 1 quota unit per refresh (free allowance is 10,000/day). */
-/** Where the Captivate site lives.
- *  While it shares this deployment it is the "/network" route. Once Captivate
- *  has its own domain, paste the full URL here (e.g. "https://captivate.com")
+/** Where the Crantwiz site lives.
+ *  While it shares this deployment it is the "/network" route. Once Crantwiz
+ *  has its own domain, paste the full URL here (e.g. "https://crantwiz.com")
  *  and every link to it across the site becomes an external link that opens in
  *  a new tab — no other file needs to change. */
-export const CAPTIVATE_URL = "/network";
+export const CRANTWIZ_URL = "/network";
 
 /** The one contact given out anywhere on the site. Shown in the footer. */
 export const DISCORD_URL = "https://discord.com/users/964523481666560061";
@@ -151,6 +151,10 @@ export const person = {
   /* The page heading. It says what he does rather than hello, so the opening
      line underneath can get straight on with the detail. */
   greeting: "Creative Director (YouTube)",
+  /* What the title actually covers, revealed on hover. The title alone is a
+     job description; this is the work. Leading space because it continues the
+     heading on the same line. */
+  greetingAside: " Ideation/Scripting/Editing/Thumbnails & everything else",
   role: "Creative director",
 };
 
@@ -167,12 +171,12 @@ export const bio: Paragraph[] = [
       kind: "text",
       value: "Go by Tizzi online. I'm 17, living in Toronto. Running ",
     },
-    /* Captivate stays a link. Since the Network section came off the homepage
+    /* Crantwiz stays a link. Since the Network section came off the homepage
        this is the only way into /network from here. */
     {
       kind: "link",
-      value: "Captivate",
-      href: CAPTIVATE_URL,
+      value: "Crantwiz",
+      href: CRANTWIZ_URL,
       newTab: true,
     },
     { kind: "text", value: ", a small network of YouTube channels." },
@@ -181,7 +185,7 @@ export const bio: Paragraph[] = [
     {
       kind: "text",
       value:
-        "Started out as a video editor and now I'm obsessed with all things YouTube. Also heading into my senior year of high school.",
+        "Started out as a video editor and now obsessed with all things YouTube. Also heading into my senior year of high school.",
     },
   ],
   [

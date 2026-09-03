@@ -43,9 +43,9 @@ type Message = { role: "user" | "assistant"; content: string };
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 /** sessionStorage flag so a refresh in the same tab does not re-greet. */
-const AUTO_GREET_KEY = "captivate:greeted";
+const AUTO_GREET_KEY = "crantwiz:greeted";
 /** Where the conversation is kept so a reload does not wipe it. */
-const HISTORY_KEY = "captivate:chat";
+const HISTORY_KEY = "crantwiz:chat";
 
 /* ============================================================================
  *  The conversation, kept across a reload.

@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
+import { HoverAside } from "@/components/hover-aside";
 import { useSound } from "@/components/sound";
 import { Slam, composeStack, hashSeed } from "@/components/slam-stack";
 import { useMagnetism } from "@/components/use-magnetism";
@@ -30,7 +31,7 @@ function TextLink({
 }) {
   const { play } = useSound();
   // newTab forces a real outbound link even for an in-site path — that's how
-  // Captivate is linked, so it reads as its own site rather than a subsection.
+  // Crantwiz is linked, so it reads as its own site rather than a subsection.
   const internal = href.startsWith("/") && !newTab;
   const className =
     "group relative inline-block text-ink transition-colors duration-200 hover:text-accent";
@@ -216,70 +217,14 @@ function SpoilerSegment({
 
 /* ---------------------------------------------------------------- aside -- */
 
-/* A phrase that finishes its own sentence when you hover it.
- *
- * The same treatment the trip to Japan uses, minus the pictures: the extra
- * words are set inline, after the phrase, so they carry on the line rather
- * than floating over it, and they are not in the page at all until hovered. */
+/* The behaviour lives in HoverAside, because the page heading uses it too.
+ * This only unwraps the segment into it. */
 function AsideSegment({
   segment,
 }: {
   segment: Extract<Segment, { kind: "aside" }>;
 }) {
-  const [shown, setShown] = useState(false);
-  const wrapperRef = useRef<HTMLSpanElement>(null);
-  const { play } = useSound();
-
-  // Tapping elsewhere closes it on touch devices, which have no hover.
-  useEffect(() => {
-    if (!shown) return;
-    const onDocPointerDown = (event: PointerEvent) => {
-      if (!wrapperRef.current?.contains(event.target as Node)) setShown(false);
-    };
-    document.addEventListener("pointerdown", onDocPointerDown);
-    return () => document.removeEventListener("pointerdown", onDocPointerDown);
-  }, [shown]);
-
-  const show = () => {
-    if (!shown) play("hover");
-    setShown(true);
-  };
-
-  return (
-    /* The wrapper covers the phrase and the words it reveals, so reading to
-       the end of them does not dismiss them halfway. */
-    <span
-      ref={wrapperRef}
-      onMouseEnter={show}
-      onMouseLeave={() => setShown(false)}
-    >
-      <button
-        type="button"
-        onClick={() => setShown((prev) => !prev)}
-        onFocus={show}
-        aria-expanded={shown}
-        className="group relative cursor-help text-ink transition-colors duration-200 hover:text-accent"
-      >
-        {segment.value}
-        <span className="absolute -bottom-px left-0 h-px w-full origin-left scale-x-0 bg-accent transition-transform duration-300 ease-out group-hover:scale-x-100" />
-        <span className="absolute -bottom-px left-0 h-px w-full bg-line" />
-      </button>
-
-      <AnimatePresence>
-        {shown && (
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            className="text-muted"
-          >
-            {segment.lead}
-          </motion.span>
-        )}
-      </AnimatePresence>
-    </span>
-  );
+  return <HoverAside label={segment.value} lead={segment.lead} />;
 }
 
 /* -------------------------------------------------------------- gallery -- */

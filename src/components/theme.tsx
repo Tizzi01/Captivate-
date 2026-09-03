@@ -17,7 +17,7 @@ import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 
 import { useSound } from "@/components/sound";
 
-const STORAGE_KEY = "captivate:theme";
+const STORAGE_KEY = "crantwiz:theme";
 const WIPE_MS = 700;
 
 /** Injected into <head>. Deliberately tiny and dependency-free. */

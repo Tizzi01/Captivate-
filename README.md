@@ -1,4 +1,4 @@
-# Captivate
+# Crantwiz
 
 Personal site + network directory for Tizzi.
 
@@ -48,7 +48,7 @@ routine updates.
 One line at the top of `site.ts`:
 
 ```ts
-export const BRAND = "Captivate"; // -> "Captivate Media", "Captivate Studios"...
+export const BRAND = "Crantwiz"; // -> "Crantwiz Media", "Crantwiz Studios"...
 ```
 
 It updates the page titles, the landing-page card, and the `/network` heading.

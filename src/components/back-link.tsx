@@ -16,7 +16,7 @@ export function BackLink({
   label: string;
   arrow?: boolean;
   href?: string;
-  /** No sound. For the credit in the Captivate footer, which is a signature
+  /** No sound. For the credit in the Crantwiz footer, which is a signature
    *  rather than a control, and does not want announcing. */
   silent?: boolean;
 }) {

@@ -153,7 +153,7 @@ body {
 
 /* The incoming theme is clipped to the growing circle. */
 ::view-transition-new(root) {
-  animation: captivate-wipe var(--wipe-duration, 700ms)
+  animation: crantwiz-wipe var(--wipe-duration, 700ms)
     cubic-bezier(0.22, 1, 0.36, 1) forwards;
   z-index: 2;
 }
@@ -169,7 +169,7 @@ body {
  *
  * It does mean the circle covers the screen slightly before the animation
  * ends, which is invisible behind the ease-out curve. */
-@keyframes captivate-wipe {
+@keyframes crantwiz-wipe {
   from {
     clip-path: circle(0px at var(--wipe-x, 50%) var(--wipe-y, 50%));
   }

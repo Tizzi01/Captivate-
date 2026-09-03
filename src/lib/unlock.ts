@@ -36,7 +36,7 @@ export function isUnlockScope(value: unknown): value is UnlockScope {
 
 /** One cookie per area, so they cannot stand in for each other. */
 export function unlockCookie(scope: UnlockScope): string {
-  return `captivate_unlock_${scope}`;
+  return `crantwiz_unlock_${scope}`;
 }
 
 /* How long an unlock lasts before the password is asked for again.

@@ -1,6 +1,6 @@
 "use client";
 
-/* The doorway to the Captivate site. Kept as a small chip rather than a big
+/* The doorway to the Crantwiz site. Kept as a small chip rather than a big
  * banner — it should read as a distinct destination without shouting, which is
  * roughly how arlan.me treats its "Vault" link. */
 
@@ -19,9 +19,9 @@ export function NetworkInvite({
 }) {
   const { play } = useSound();
 
-  // Captivate is its own destination, so this is always a full outbound
+  // Crantwiz is its own destination, so this is always a full outbound
   // navigation in a new tab — even while it still lives at an in-site path.
-  // The moment CAPTIVATE_URL points at a real domain, nothing here changes.
+  // The moment CRANTWIZ_URL points at a real domain, nothing here changes.
   const anchorProps = {
     href,
     target: "_blank",

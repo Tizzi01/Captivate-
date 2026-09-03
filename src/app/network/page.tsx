@@ -9,7 +9,7 @@ import { isUnlocked } from "@/lib/unlock";
 import { getChannelStats } from "@/lib/youtube";
 import { UnlockForm } from "@/components/unlock-form";
 
-/* This page is written to stand on its own — it carries the Captivate brand,
+/* This page is written to stand on its own — it carries the Crantwiz brand,
  * not Tizzi's, so the URL can be shared by itself without handing someone a
  * personal portfolio. The only personal reference is one credit in the footer. */
 
