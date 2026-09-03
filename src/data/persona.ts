@@ -427,7 +427,7 @@ export const CHAT_SUGGESTIONS = [
   "what's your fav anime?",
   'how do you feel about "AI art"?',
   "what's your fav manga?",
-  "how did you make this website?",
+  "what's your fav fruit",
 ];
 
 /* -------------------------------------------------------------- limits ---- */
