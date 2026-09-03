@@ -18,11 +18,12 @@ export const FONT: "lexend" | "arial" = "lexend";
 /** How often the server re-fetches YouTube stats, in seconds. 300 = 5 minutes.
  *  Costs 1 quota unit per refresh (free allowance is 10,000/day). */
 /** Where the Crantwiz site lives.
- *  While it shares this deployment it is the "/network" route. Once Crantwiz
+ *  While it shares this deployment it is the "/crantwiz" route. Once Crantwiz
  *  has its own domain, paste the full URL here (e.g. "https://crantwiz.com")
  *  and every link to it across the site becomes an external link that opens in
- *  a new tab — no other file needs to change. */
-export const CRANTWIZ_URL = "/network";
+ *  a new tab. No other file needs to change: this is the only place the
+ *  address is written down. */
+export const CRANTWIZ_URL = "/crantwiz";
 
 /** The one contact given out anywhere on the site. Shown in the footer. */
 export const DISCORD_URL = "https://discord.com/users/964523481666560061";
