@@ -682,7 +682,12 @@ function DisclosureTrigger({
       }}
       onPointerEnter={() => play("hover")}
       aria-expanded={open}
-      className="group relative inline-flex items-center gap-1 text-ink transition-colors duration-200 hover:text-accent"
+      /* Body grey, not ink, unlike every other interactive phrase in the bio.
+         Those sit inside a sentence and have to be findable in it. This one is
+         the way into a whole extra section, and set in ink it read as the
+         loudest thing in the paragraph, which is backwards: it is an aside, not
+         the point. The underline and the chevron still say it can be opened. */
+      className="group relative inline-flex items-center gap-1 transition-colors duration-200 hover:text-accent"
     >
       {label}
       <span className="absolute -bottom-px left-0 h-px w-full bg-line" />
