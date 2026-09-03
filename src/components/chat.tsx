@@ -227,35 +227,11 @@ const Composer = memo(function Composer({
 }: {
   onSend: (text: string) => void;
   locked: boolean;
-  /** Fired the first time someone reaches for the box. */
+  /** Fired the first time someone clicks into the box. */
   onWake?: () => void;
 }) {
   const [draft, setDraft] = useState("");
 
-  /* Hover only counts if it is held. A pointer crossing the box on its way
-   * somewhere else is not someone starting a conversation, and starting one at
-   * them costs a real API request.
-   *
-   * Focus is exempt from the wait: tapping or tabbing to the box is already
-   * deliberate, and on a phone there is no hover to hold in the first place. */
-  const intent = useRef<number | undefined>(undefined);
-
-  const holdStart = () => {
-    if (!onWake || intent.current) return;
-    intent.current = window.setTimeout(() => {
-      intent.current = undefined;
-      onWake();
-    }, HOVER_INTENT_MS);
-  };
-
-  const holdCancel = () => {
-    if (!intent.current) return;
-    window.clearTimeout(intent.current);
-    intent.current = undefined;
-  };
-
-  // Leaving the page mid-wait should not fire it later.
-  useEffect(() => holdCancel, []);
 
   const submit = () => {
     const text = draft.trim();
@@ -268,8 +244,11 @@ const Composer = memo(function Composer({
     <form
       /* On the whole pill rather than the input alone, so arriving anywhere
          near it counts as reaching for it. */
-      onPointerEnter={holdStart}
-      onPointerLeave={holdCancel}
+      /* Clicking into the box, not passing over it. Hover was tried and it
+         starts a conversation at people who were only on their way past.
+         Focus rather than click alone, so tabbing to it counts too, and click
+         as well, so the padding around the input behaves like the input. */
+      onClick={onWake}
       onFocus={onWake}
       onSubmit={(event) => {
         event.preventDefault();
@@ -383,23 +362,9 @@ function splitIntoMessages(reply: string): string[] {
 /* Let a bubble finish stretching into place before the next set of dots
  * appears under it. The morph is a spring and takes about 450ms; starting the
  * next row on top of it is the stutter you get otherwise. */
-/* Starting a conversation is three separate movements, and they have to
- * happen one after another. All three at once was the complaint: the page
- * lurches, the panel grows and the text lands in the same instant, so none of
- * it reads as one thing causing the next.
- *
- * Rest on the box, then the page travels, then the panel opens.
- */
-
-/** How long the pointer must rest on the box before it counts as intent.
- *  Brushing past on the way somewhere else should not start anything. */
-const HOVER_INTENT_MS = 700;
-
-/** The length of the page journey. Matches easePageTo default duration. */
-const PAGE_EASE_MS = 700;
-
-/** A breath between the movements, so they read as consecutive not merged. */
-const BEAT_MS = 90;
+/** How long the panel takes to open, and the page takes to travel, because
+ *  they are one movement and share the number. See openAndTravel. */
+const OPEN_MS = 620;
 
 const BUBBLE_SETTLE_MS = 380;
 
@@ -431,52 +396,94 @@ function typingDelay(text: string): number {
  * state to get out of sync. */
 const FADE_PX = 20;
 
-/* Ease the page down so the whole chat is in view once it opens.
+/* Open the panel and bring the page down to meet it, as one movement.
  *
- * Hand-rolled rather than scrollIntoView({ behavior: "smooth" }), because the
- * native curve is symmetrical: it creeps away at the start. This one leaves
- * immediately and coasts into place (ease-out cubic).
+ * These used to be two animations that merely overlapped, and it showed. The
+ * panel ran a 420ms CSS transition on one curve while the page ran a 700ms
+ * hand-rolled ease on another, started from a different point in the frame,
+ * and aimed at a target that moved every frame because the panel growing was
+ * the thing that kept changing it. Two objects accelerating and settling on
+ * different schedules, so the eye reads two events instead of one.
  *
- * The target is recomputed every frame on purpose. The panel is easing open at
- * the same time, so the document is still growing underneath this, and a
- * position measured once at the start would land short. */
-function easePageTo(bottomOf: () => number, duration = 700) {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+ * Sequencing them instead was worse: waiting out the page before opening the
+ * panel is a pause with nothing in it.
+ *
+ * So they are driven from here together: one clock, one easing function, one
+ * frame writing both. Because the height and the scroll are the same eased
+ * number, their velocity curves are identical by construction rather than by
+ * being tuned to match, and they peak, coast and settle as one thing.
+ *
+ * The panel CSS transition is switched off for the duration. Left on, it would
+ * try to ease toward each per-frame height and lag behind its own driver.
+ *
+ * The page aims at where the bottom WILL be, predicted from how far the panel
+ * is about to grow, rather than at where it is now. Chasing a moving target
+ * was the other half of the mismatch: it kept the page accelerating after the
+ * panel had already begun to settle. */
+function openAndTravel(el: HTMLElement, toH: number) {
+  const from = el.getBoundingClientRect().height;
+  const grow = toH - from;
 
-  const start = window.scrollY;
-  const t0 = performance.now();
-  let cancelled = false;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    el.style.height = `${toH}px`;
+    return;
+  }
 
-  /* Any deliberate scroll of their own wins immediately.
+  const startY = window.scrollY;
+  const wantY = Math.max(
+    0,
+    document.documentElement.scrollHeight + grow - window.innerHeight,
+  );
+  /* Only ever downward. The chat is the last thing on the page, so the bottom
+   * is where it wants to sit, and hauling someone back up is never right. */
+  const travels = wantY > startY;
+
+  el.style.transition = "none";
+  el.style.height = `${from}px`;
+
+  /* A deliberate scroll of their own wins, and stops only the page half: the
+   * panel still has to finish opening or it is left stranded mid-height.
    *
-   * Attached a frame late on purpose: this is kicked off from a send, and the
-   * Enter key that asked for it may still be propagating. Attaching straight
+   * Attached a frame late on purpose. This is kicked off from a send, and the
+   * Enter key that asked for it may still be propagating; attaching straight
    * away meant the scroll cancelled itself on the very keystroke that
    * requested it. */
+  let stopped = false;
+  const events = ["wheel", "touchstart", "keydown"];
   const stop = () => {
-    cancelled = true;
-    for (const e of ["wheel", "touchstart", "keydown"]) {
-      window.removeEventListener(e, stop);
-    }
+    stopped = true;
+    for (const e of events) window.removeEventListener(e, stop);
   };
   requestAnimationFrame(() => {
-    if (cancelled) return;
-    for (const e of ["wheel", "touchstart", "keydown"]) {
+    if (stopped) return;
+    for (const e of events) {
       window.addEventListener(e, stop, { passive: true, once: true });
     }
   });
 
+  const t0 = performance.now();
+
   function step(now: number) {
-    if (cancelled) return;
-    const t = Math.min(1, (now - t0) / duration);
+    const t = Math.min(1, (now - t0) / OPEN_MS);
+
+    /* Ease-out cubic. Hand-rolled rather than scrollIntoView({ behavior:
+     * "smooth" }), whose curve is symmetrical and creeps away at the start.
+     * This leaves immediately and coasts into place. */
     const eased = 1 - Math.pow(1 - t, 3);
 
-    const max = document.documentElement.scrollHeight - window.innerHeight;
-    const want = Math.min(bottomOf() - window.innerHeight, max);
-    if (want > start) window.scrollTo(0, start + (want - start) * eased);
+    el.style.height = `${from + grow * eased}px`;
+    if (travels && !stopped) {
+      window.scrollTo(0, startY + (wantY - startY) * eased);
+    }
 
-    if (t < 1) requestAnimationFrame(step);
-    else stop();
+    if (t < 1) {
+      requestAnimationFrame(step);
+    } else {
+      // Hand the height back to CSS, exactly where the animation left it.
+      el.style.transition = "";
+      el.style.height = `${toH}px`;
+      stop();
+    }
   }
   requestAnimationFrame(step);
 }
@@ -1031,15 +1038,26 @@ export function Chat() {
    * under the bubble that had just landed. A box that never changes size after
    * the first message cannot do that. */
   const openedRef = useRef(false);
-  /** One page-ease, on the visitor's first message. */
-  const pageEasedRef = useRef(false);
+  /** Set by whichever deliberate act started the conversation, so the page
+   *  travels for a click but not for a conversation restored from a reload. */
+  const travelRef = useRef(false);
   useEffect(() => {
     if (openedRef.current || messages.length === 0) return;
     const el = scrollRef.current;
     if (!el) return;
     openedRef.current = true;
 
-    /* Pin the current auto height so the transition has a number to ease FROM,
+    if (travelRef.current) {
+      // The panel and the page, as one movement.
+      openAndTravel(el, PANEL_PX);
+      return;
+    }
+
+    /* Restored from a reload: the panel still has to reach full height, but
+     * pulling the page down under someone who has only just arrived is not
+     * anything they asked for.
+     *
+     * Pin the current auto height so the transition has a number to ease FROM,
      * force that to land, then set the target. Without the forced reflow the
      * browser coalesces both writes and the panel snaps. */
     el.style.height = `${el.getBoundingClientRect().height}px`;
@@ -1068,13 +1086,6 @@ export function Chat() {
    * arrived. A request left to finish after unmount is harmless; its state
    * updates are discarded. New sends still abort the previous one. */
 
-  /* Ease the page to the bottom, once, whichever of the two starts the
-   * conversation: reaching for the box, or typing into it. */
-  const easeIntoView = useCallback(() => {
-    if (pageEasedRef.current) return;
-    pageEasedRef.current = true;
-    easePageTo(() => document.documentElement.scrollHeight);
-  }, []);
 
   const send = useCallback(
     async (content: string) => {
@@ -1113,17 +1124,10 @@ export function Chat() {
       commit(next);
       setPending(true);
 
-      /* Ease the page to the bottom, once, the first time they send
-       * something themselves. All the way down rather than just far enough to
-       * clear the composer: the chat is the last thing on the page, so the
-       * bottom is where it wants to sit.
-       *
-       * Deliberately not tied to the panel opening. The chat greets people by
-       * itself when it scrolls into view, which opens the panel while they are
-       * still scrolling the page by hand: easing the page under them there is
-       * hostile, and their scrolling cancelled it anyway, which used up the
-       * one shot before they had typed a word. */
-      easeIntoView();
+      /* Typing into the box is as deliberate as clicking into it, so the
+       * page travels for this too. The panel opening carries it now, so this
+       * only marks it as wanted; nothing moves until the panel does. */
+      travelRef.current = true;
 
       try {
         const ask = () =>
@@ -1199,7 +1203,7 @@ export function Chat() {
         if (abortRef.current === controller) setPending(false);
       }
     },
-    [commit, flushPlayout, playOut, easeIntoView],
+    [commit, flushPlayout, playOut],
   );
 
   /* The opening exchange is scripted, not generated. It reads the same every
@@ -1262,29 +1266,11 @@ export function Chat() {
       /* ignore */
     }
 
-    /* One: the page travels to the bottom, alone.
-     *
-     * This used to be left out entirely, back when the greeting fired on
-     * scroll and moving the page under someone mid-scroll would have been
-     * hostile. It is reached for now, so travelling to it is what was asked. */
-    easeIntoView();
-
-    /* Two: only once it has arrived does the panel open and the conversation
-     * start. Waiting out the whole journey rather than starting partway
-     * through is the entire difference between three things happening in order
-     * and three things happening at once. */
-    window.setTimeout(() => {
-      void greet();
-
-      /* Three: opening the panel makes the page taller, so the bottom it just
-       * travelled to is no longer the bottom. This follows it down, overlapping
-       * the opening rather than trailing it, so the page reads as being carried
-       * by the growth instead of lurching a second time after it. */
-      window.setTimeout(() => {
-        easePageTo(() => document.documentElement.scrollHeight);
-      }, BEAT_MS);
-    }, PAGE_EASE_MS + BEAT_MS);
-  }, [greet, easeIntoView]);
+    /* Clicking into the box is the deliberate act, so the page travels with
+     * the panel from here. Both happen inside the one opening movement. */
+    travelRef.current = true;
+    void greet();
+  }, [greet]);
 
   return (
     /* Content sits at the TOP and the box grows downward: it opens at min-h
