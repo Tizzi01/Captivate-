@@ -87,9 +87,8 @@ export default async function NetworkPage() {
           <FadeIn delay={0.3}>
             <div className="mt-6 rounded-lg border border-dashed border-line px-4 py-5 pl-5 sm:pl-7">
               <p className="text-muted">
-                The channels themselves aren&apos;t public yet. They will be
-                before long. Until then the names, logos and links need
-                authorised access.
+                The channels aren&apos;t public yet, so access is currently
+                restricted to authorized users.
               </p>
               <UnlockForm scope="network" label="Unlock" />
             </div>
