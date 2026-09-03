@@ -3,6 +3,7 @@ import { FadeIn } from "@/components/fade-in";
 import { HoverAside } from "@/components/hover-aside";
 import { Intro } from "@/components/intro";
 import { LinkList } from "@/components/links";
+import { CHAT_ASIDE } from "@/data/persona";
 import { DISCORD_URL, bio, links, otherStuff, person } from "@/data/site";
 
 /* The whole page is one narrow column with a hanging indent: section headings
@@ -33,7 +34,9 @@ export default function Home() {
 
       <section className="mt-12">
         <FadeIn delay={0.6}>
-          <h2 className="text-ink">Chat</h2>
+          <h2 className="text-ink">
+            <HoverAside label="Chat" lead={CHAT_ASIDE} />
+          </h2>
         </FadeIn>
         {/* The chat used to be the one thing on the page that was simply
             there on load, while every heading, paragraph and link around it
