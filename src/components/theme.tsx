@@ -9,8 +9,12 @@
  *
  *  The wipe uses the View Transitions API: the browser snapshots the page,
  *  we flip the class, and a CSS keyframe animation on ::view-transition-new
- *  reveals the result behind a circle growing from the button. Browsers with
- *  no View Transitions support just flip. See the rules in globals.css.
+ *  reveals the result behind a circle growing from the button. See the rules
+ *  in globals.css.
+ *
+ *  It is a pointer-and-large-screen effect only. Phones and tablets, browsers
+ *  without View Transitions, and anyone who has asked for reduced motion all
+ *  get a plain instant flip instead. See skipWipe.
  * ========================================================================= */
 
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
@@ -20,28 +24,25 @@ import { useSound } from "@/components/sound";
 const STORAGE_KEY = "crantwiz:theme";
 const WIPE_MS = 700;
 
-/** The centred wipe runs longer, because it runs on a linear ramp and with a
- *  radius that overshoots the screen. Only the first part of it is ever
- *  visible, so this is longer than it looks: roughly half a second reaches the
- *  eye. See the comment in `toggle`. */
-const WIPE_MS_CENTRE = 900;
+/** Below this width there is no wipe at all. Matches Tailwind's sm
+ *  breakpoint, which is where the rest of the layout changes too. */
+const NO_WIPE_BELOW = 640;
 
-/** Below this width the wipe starts from the middle of the screen instead of
- *  from the button. Matches Tailwind's sm breakpoint, which is where the rest
- *  of the layout changes too. */
-const WIPE_FROM_CENTRE_BELOW = 640;
-
-/* Whether the circle should grow from the middle of the screen rather than
- * from the button.
+/* Whether to skip the wipe and simply flip.
  *
- * Two ways to qualify, because width alone was not enough. A tablet is wide
- * enough to pass a width test while still having the button parked in a far
- * corner with no pointer anywhere near it, so the wipe appears to come from
- * nothing. Anything without hover has no cursor for the circle to belong to,
- * whatever its width. */
-function wipeFromCentre(): boolean {
+ * The wipe is built around a circle growing from the button, and on a phone
+ * the button is a 44px square jammed in a corner. Three attempts at making
+ * that read well on a small screen each failed differently, and the honest
+ * conclusion is that the effect wants a large screen and a cursor. An instant
+ * flip is not a degraded version of it; it is what a toggle normally does, and
+ * on a phone it is the better answer.
+ *
+ * Two ways to qualify. A tablet is wide enough to pass a width test and is
+ * still operated by thumb with the button in the far corner, so anything
+ * without hover skips it too, whatever its width. */
+function skipWipe(): boolean {
   return (
-    window.innerWidth < WIPE_FROM_CENTRE_BELOW ||
+    window.innerWidth < NO_WIPE_BELOW ||
     window.matchMedia("(hover: none)").matches
   );
 }
@@ -137,72 +138,26 @@ export function ThemeToggle() {
       "(prefers-reduced-motion: reduce)",
     ).matches;
 
-    // No View Transitions support (or motion turned down): just flip.
-    if (!doc.startViewTransition || reduced) {
+    /* Just flip, no animation, in three cases: the browser cannot do view
+     * transitions, the visitor asked for less motion, or there is no room and
+     * no cursor for the effect to make sense in. */
+    if (!doc.startViewTransition || reduced || skipWipe()) {
       applyTheme(next);
       return;
     }
 
-    // The circle grows from the middle of the button, whether the button was
-    // clicked or Enter was pressed somewhere else entirely. This is the ONLY
-    // thing measured here — element rects are reliable, while reading the
-    // viewport size proved not to be. The end radius is a fixed 150vmax set in
-    // globals.css, which clears every corner from any origin.
+    /* The circle grows from the middle of the button, whether the button was
+     * clicked or Enter was pressed somewhere else entirely. This is the ONLY
+     * thing measured here: element rects are reliable, while reading the
+     * viewport size proved not to be, repeatedly. The end radius is a fixed
+     * 150vmax in globals.css, which clears every corner from any origin. */
     const box = buttonRef.current?.getBoundingClientRect();
     const root = document.documentElement;
-
-    /* On a phone the button sits in the very corner, and a circle of 150vmax
-     * grown from there has covered the screen 231ms into a 700ms animation.
-     * The remaining two thirds happen outside the viewport, so what is
-     * actually seen is a small fast flick out of the corner rather than a
-     * sweep across the screen.
-     *
-     * Narrow screens therefore start from the middle and use a radius
-     * measured to the exact furthest corner, which is half the diagonal from
-     * the centre. The whole duration is then spent on screen. Wider screens
-     * keep the button origin and the 150vmax fallback, unchanged. */
-    if (wipeFromCentre()) {
-      /* Nothing here is measured, and that is the fix.
-       *
-       * Two attempts at measuring the viewport both came out short. In px the
-       * circle covered a quarter of the screen, because a px radius halves
-       * against a device pixel ratio of 2. Converted to vmax it still stopped
-       * before the edges, because on a phone the height JS reports and the
-       * height CSS resolves vmax against are not the same number: the browser
-       * chrome is counted by one and not the other. The comment on the
-       * original code said reading the viewport was unreliable. It was right,
-       * twice.
-       *
-       * So the radius is a constant that cannot be short. From the centre, the
-       * distance to the furthest corner is half the diagonal, which is at most
-       * 0.708 of the longer side, whatever the aspect ratio. 100vmax is
-       * therefore always past the corner with room to spare, and no arithmetic
-       * can get it wrong.
-       *
-       * The cost of a generous radius is that the screen fills early and the
-       * rest of the animation happens outside the frame, which is the flick
-       * this all started as. That is paid for on the clock instead: a linear
-       * ramp over a longer duration, so the part that is on screen is not the
-       * fast head of an ease-out curve. Roughly half a second of visible
-       * sweep, on any screen, without knowing its size. */
-      root.style.setProperty("--wipe-x", "50%");
-      root.style.setProperty("--wipe-y", "50%");
-      root.style.setProperty("--wipe-r", "100vmax");
-      root.style.setProperty("--wipe-ease", "linear");
-      root.style.setProperty("--wipe-duration", `${WIPE_MS_CENTRE}ms`);
-    } else {
-      if (box) {
-        root.style.setProperty("--wipe-x", `${box.left + box.width / 2}px`);
-        root.style.setProperty("--wipe-y", `${box.top + box.height / 2}px`);
-      }
-      /* Back to the CSS defaults in every respect, in case this window was
-         narrow, or on a touchscreen, a moment ago. This branch is the
-         behaviour that shipped and was signed off; it must be reachable in
-         exactly its original form. */
-      root.style.removeProperty("--wipe-r");
-      root.style.removeProperty("--wipe-ease");
-      root.style.setProperty("--wipe-duration", `${WIPE_MS}ms`);
+    if (box) {
+      root.style.setProperty("--wipe-x", `${box.left + box.width / 2}px`);
+      root.style.setProperty("--wipe-y", `${box.top + box.height / 2}px`);
     }
+    root.style.setProperty("--wipe-duration", `${WIPE_MS}ms`);
 
     doc.startViewTransition(() => applyTheme(next));
   }, [play]);

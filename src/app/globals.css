@@ -136,9 +136,14 @@ body {
  *  pseudo-elements has finished, so an empty `animation: none` lets the browser
  *  tear the whole thing down early and snap to the final colours mid-wipe.
  *
- *  theme.tsx sets --wipe-x / --wipe-y / --wipe-r on <html> before starting the
+ *  theme.tsx sets --wipe-x / --wipe-y on <html> before starting the
  *  transition; they cascade into these pseudo-elements. The fallbacks below
  *  mean this still degrades to a centred wipe if they are ever missing.
+ *
+ *  None of this runs on a phone or a tablet. The effect is built around a
+ *  circle leaving the button, and on a touch screen the button is a small
+ *  square in a corner; theme.tsx skips the transition entirely there and flips
+ *  the class on its own.
  * ========================================================================= */
 ::view-transition-old(root),
 ::view-transition-new(root) {
@@ -153,13 +158,8 @@ body {
 
 /* The incoming theme is clipped to the growing circle. */
 ::view-transition-new(root) {
-  /* The curve is a variable because the centred wipe needs a different one.
-     With a radius that deliberately overshoots the screen, only the head of an
-     ease-out is ever on screen, which reads as a flick; that case switches to
-     linear so the visible part travels at a steady speed. Unset, this is the
-     curve that has always been here. */
   animation: crantwiz-wipe var(--wipe-duration, 700ms)
-    var(--wipe-ease, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+    cubic-bezier(0.22, 1, 0.36, 1) forwards;
   z-index: 2;
 }
 
@@ -179,9 +179,7 @@ body {
     clip-path: circle(0px at var(--wipe-x, 50%) var(--wipe-y, 50%));
   }
   to {
-    clip-path: circle(
-      var(--wipe-r, 150vmax) at var(--wipe-x, 50%) var(--wipe-y, 50%)
-    );
+    clip-path: circle(150vmax at var(--wipe-x, 50%) var(--wipe-y, 50%));
   }
 }
 
