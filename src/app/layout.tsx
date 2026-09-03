@@ -3,7 +3,7 @@ import { Lexend } from "next/font/google";
 
 import { SoundProvider, SoundToggle } from "@/components/sound";
 import { THEME_SCRIPT, ThemeToggle } from "@/components/theme";
-import { FONT, person } from "@/data/site";
+import { FONT, SITE_URL, person } from "@/data/site";
 
 import "./globals.css";
 
@@ -26,9 +26,26 @@ const lexend = Lexend({
  * The two pages that do set their own keep them: they describe a thing, not a
  * person. */
 export const metadata: Metadata = {
+  /* What relative URLs in the metadata resolve against. The card image is
+     emitted as a path, and a chat app fetching it has no page to resolve that
+     against, so without this the preview arrives with no picture. */
+  metadataBase: new URL(SITE_URL),
   title: {
     default: `${person.name}`,
     template: `%s · ${person.name}`,
+  },
+  /* No og:title and no og:url here on purpose.
+
+     Title, because left unset each page contributes its own resolved one, so
+     /crantwiz and /scripts keep theirs instead of inheriting this.
+
+     URL, because anything set here is inherited literally rather than resolved
+     per page, so every page would announce the home page as its own address.
+     A wrong canonical is worse than none, and chat apps link the URL that was
+     actually shared regardless. */
+  openGraph: {
+    type: "website",
+    siteName: person.name,
   },
 };
 

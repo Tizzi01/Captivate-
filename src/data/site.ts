@@ -25,6 +25,11 @@ export const FONT: "lexend" | "arial" = "lexend";
  *  address is written down. */
 export const CRANTWIZ_URL = "/crantwiz";
 
+/** Where this site actually lives. Used to turn relative paths into the
+ *  absolute URLs that link previews need, since a chat app resolving an image
+ *  has no page to resolve it against. */
+export const SITE_URL = "https://tizzi.me";
+
 /** The one contact given out anywhere on the site. Shown in the footer. */
 export const DISCORD_URL = "https://discord.com/users/964523481666560061";
 
