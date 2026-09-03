@@ -20,6 +20,12 @@ import { useSound } from "@/components/sound";
 const STORAGE_KEY = "crantwiz:theme";
 const WIPE_MS = 700;
 
+/** The centred wipe runs longer, because it runs on a linear ramp and with a
+ *  radius that overshoots the screen. Only the first part of it is ever
+ *  visible, so this is longer than it looks: roughly half a second reaches the
+ *  eye. See the comment in `toggle`. */
+const WIPE_MS_CENTRE = 900;
+
 /** Below this width the wipe starts from the middle of the screen instead of
  *  from the button. Matches Tailwind's sm breakpoint, which is where the rest
  *  of the layout changes too. */
@@ -156,40 +162,47 @@ export function ThemeToggle() {
      * the centre. The whole duration is then spent on screen. Wider screens
      * keep the button origin and the 150vmax fallback, unchanged. */
     if (wipeFromCentre()) {
-      /* All three values are viewport-relative, and that is the point.
+      /* Nothing here is measured, and that is the fix.
        *
-       * The first version of this set the radius in px, measured from the
-       * centre to the corner. On a phone it covered about a quarter of the
-       * screen: a quarter is what you get when a radius lands at half its
-       * intended length, and half is what a px length becomes when it meets a
-       * device pixel ratio of 2. The original code used vmax rather than px
-       * for exactly this reason, and swapping in px threw that away.
+       * Two attempts at measuring the viewport both came out short. In px the
+       * circle covered a quarter of the screen, because a px radius halves
+       * against a device pixel ratio of 2. Converted to vmax it still stopped
+       * before the edges, because on a phone the height JS reports and the
+       * height CSS resolves vmax against are not the same number: the browser
+       * chrome is counted by one and not the other. The comment on the
+       * original code said reading the viewport was unreliable. It was right,
+       * twice.
        *
-       * Percentages and vmax are resolved against the viewport itself, so the
-       * pixel ratio never enters into it.
+       * So the radius is a constant that cannot be short. From the centre, the
+       * distance to the furthest corner is half the diagonal, which is at most
+       * 0.708 of the longer side, whatever the aspect ratio. 100vmax is
+       * therefore always past the corner with room to spare, and no arithmetic
+       * can get it wrong.
        *
-       * The radius still has to be measured rather than fixed, because it is
-       * what keeps the animation on screen for its whole duration: too large
-       * and the circle covers everything early and the rest happens outside
-       * the frame, which is the flick this started as. From the centre the
-       * distance to the furthest corner is half the diagonal, expressed here
-       * as a fraction of the longer side, plus a point of margin for
-       * rounding. */
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const needed = Math.hypot(w, h) / 2;
-      const asVmax = (needed / Math.max(w, h)) * 100;
-
+       * The cost of a generous radius is that the screen fills early and the
+       * rest of the animation happens outside the frame, which is the flick
+       * this all started as. That is paid for on the clock instead: a linear
+       * ramp over a longer duration, so the part that is on screen is not the
+       * fast head of an ease-out curve. Roughly half a second of visible
+       * sweep, on any screen, without knowing its size. */
       root.style.setProperty("--wipe-x", "50%");
       root.style.setProperty("--wipe-y", "50%");
-      root.style.setProperty("--wipe-r", `${(asVmax + 1).toFixed(2)}vmax`);
-    } else if (box) {
-      root.style.setProperty("--wipe-x", `${box.left + box.width / 2}px`);
-      root.style.setProperty("--wipe-y", `${box.top + box.height / 2}px`);
-      // Back to the CSS fallback, in case the window was narrow a moment ago.
+      root.style.setProperty("--wipe-r", "100vmax");
+      root.style.setProperty("--wipe-ease", "linear");
+      root.style.setProperty("--wipe-duration", `${WIPE_MS_CENTRE}ms`);
+    } else {
+      if (box) {
+        root.style.setProperty("--wipe-x", `${box.left + box.width / 2}px`);
+        root.style.setProperty("--wipe-y", `${box.top + box.height / 2}px`);
+      }
+      /* Back to the CSS defaults in every respect, in case this window was
+         narrow, or on a touchscreen, a moment ago. This branch is the
+         behaviour that shipped and was signed off; it must be reachable in
+         exactly its original form. */
       root.style.removeProperty("--wipe-r");
+      root.style.removeProperty("--wipe-ease");
+      root.style.setProperty("--wipe-duration", `${WIPE_MS}ms`);
     }
-    root.style.setProperty("--wipe-duration", `${WIPE_MS}ms`);
 
     doc.startViewTransition(() => applyTheme(next));
   }, [play]);
