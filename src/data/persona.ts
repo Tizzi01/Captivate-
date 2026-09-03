@@ -627,8 +627,13 @@ export const SYSTEM_PROMPT = [WHO_I_AM, HOW_I_WRITE, BOUNDARIES]
 export const CHAT_MODEL = "gemini-3.5-flash-lite";
 
 /** Shown after a quick burst of messages, Google allows only so many per
- *  minute. Clears by itself in a few seconds. */
-export const CHAT_BUSY_MESSAGE = "one sec, im typing too fast lol";
+ *  minute. Clears by itself in a few seconds.
+ *
+ *  It has to say "wait a moment" while sounding like him rather than like an
+ *  error. The previous wording, about typing too fast, had it backwards: he is
+ *  not the one going too fast, the messages are arriving quicker than they can
+ *  be answered, so the line read as a non sequitur to anyone who saw it. */
+export const CHAT_BUSY_MESSAGE = "one sec, cant keep up lol";
 
 /* Typed into the chat, this locks /scripts and the channel details again.
  *
