@@ -161,7 +161,10 @@ export const person = {
      job description; this is the work. Leading space because it continues the
      heading on the same line. */
   greetingAside: " Ideation/Scripting/Editing/Thumbnails & everything else",
-  role: "Creative director",
+  /* The short form, for the link preview card. The heading on the page keeps
+     the "(YouTube)" because it is answering "director of what"; on a card with
+     nothing else on it, the bracket is just noise. */
+  role: "Creative Director",
 };
 
 export const TWITTER_URL: string | null = "https://x.com/tizzi_k";

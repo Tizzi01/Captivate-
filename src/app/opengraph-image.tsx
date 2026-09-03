@@ -19,7 +19,7 @@ import { person } from "@/data/site";
  *  Generated once at build, not per request: nothing here varies.
  * ========================================================================= */
 
-export const alt = `${person.name}, ${person.greeting}`;
+export const alt = `${person.name}, ${person.role}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -59,12 +59,15 @@ export default function Image() {
       >
         <div
           style={{
-            fontSize: 128,
+            fontSize: 83,
             fontWeight: 700,
             color: INK,
-            /* Lexend is loosely spaced by design, which reads well at body
-               size and looks slack at this one. Pulled in to compensate. */
-            letterSpacing: "-0.03em",
+            /* No letter-spacing, and that is the fix rather than an omission.
+               Tracking is applied after every character including the last, so
+               a negative value makes the text box end inside the final glyph.
+               Centre that box and the glyphs sit right of true centre, by half
+               the tracking, which is what made the name look off against the
+               line below it. */
             lineHeight: 1,
           }}
         >
@@ -73,13 +76,18 @@ export default function Image() {
 
         <div
           style={{
-            fontSize: 40,
+            fontSize: 26,
             fontWeight: 400,
             color: MUTED,
-            marginTop: 28,
+            /* Both lines pinned to lineHeight 1 so the block's height is the
+               two font sizes plus this gap, and nothing else. Left to default,
+               the second line carries invisible leading below it that pushes
+               the whole block above the true centre. */
+            lineHeight: 1,
+            marginTop: 22,
           }}
         >
-          {person.greeting}
+          {person.role}
         </div>
       </div>
     ),
