@@ -16,12 +16,20 @@ const lexend = Lexend({
   display: "swap",
 });
 
+/* No description on purpose.
+ *
+ * A description is what chat apps and search results print under the link, and
+ * a one-line summary of a person is exactly the pitch this site spends its
+ * whole design avoiding. With none, a shared link shows the name and nothing
+ * else, and whoever opens it reads the page rather than a summary of it.
+ *
+ * The two pages that do set their own keep them: they describe a thing, not a
+ * person. */
 export const metadata: Metadata = {
   title: {
     default: `${person.name}`,
     template: `%s · ${person.name}`,
   },
-  description: `${person.role} building and scaling YouTube channels.`,
 };
 
 export default function RootLayout({
