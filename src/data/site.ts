@@ -387,15 +387,7 @@ export const channels: Channel[] = [
     slug: "also-ran",
     name: "Forge",
     channelId: "UCru3lHd7hvDsOePEIKeK9Vw",
-    note: "Every video here is temporarily unlisted. I don't really post on this one anymore, but it gave me my first taste of success with long form YouTube.",
-    /* Every video on this channel is currently unlisted, so YouTube reports
-       zero videos and zero views for it however many it has really had. These
-       are the real figures, counted by hand from Studio on 2 Sep 2026: nine
-       videos totalling 277,968 views, the largest 185,078.
-
-       Delete this block once the videos are public. The API will report the
-       true numbers by itself and they will be live from then on. */
-    fallback: { subscribers: 3500, views: 277968, videos: 9 },
+    note: "I don't really post on this one anymore, but it gave me my first taste of success with long form YouTube.",
   },
 ];
 
