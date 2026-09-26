@@ -388,6 +388,11 @@ export const channels: Channel[] = [
     name: "Forge",
     channelId: "UCru3lHd7hvDsOePEIKeK9Vw",
     note: "I don't really post on this one anymore, but it gave me my first taste of success with long form YouTube.",
+    credit: {
+      name: "SednaFlyz",
+      avatar: "/people/sednaflyz.png",
+      text: "Videos were recorded by SednaFlyz.",
+    },
   },
 ];
 
