@@ -16,11 +16,11 @@ import { GoogleGenAI, ApiError } from "@google/genai";
 import { logConversation } from "@/lib/discord";
 
 import {
+  buildSystemPrompt,
   CHAT_BUSY_MESSAGE,
   CHAT_LIMITS,
   CHAT_MODEL,
   CHAT_QUOTA_MESSAGE,
-  SYSTEM_PROMPT,
 } from "@/data/persona";
 
 export const runtime = "nodejs";
@@ -150,7 +150,7 @@ export async function POST(request: Request) {
       model: CHAT_MODEL,
       contents,
       config: {
-        systemInstruction: SYSTEM_PROMPT,
+        systemInstruction: buildSystemPrompt(),
         maxOutputTokens: CHAT_LIMITS.maxOutputTokens,
         /* Loose on purpose. The persona pins down every fact, so the only
          * thing this is free to change is the wording, which is exactly what
